@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -110,12 +110,14 @@ class User < Principal
   # Login must contain letters, numbers, underscores only
   validates_format_of :login, :with => /\A[a-z0-9_\-@\.]*\z/i
   validates_length_of :login, :maximum => LOGIN_LENGTH_LIMIT
-  validates_length_of :firstname, :lastname, :maximum => 30
+  validates_length_of :firstname, :maximum => 30
+  validates_length_of :lastname, :maximum => 255
   validates_inclusion_of :mail_notification, :in => MAIL_NOTIFICATION_OPTIONS.collect(&:first), :allow_blank => true
   Setting::PASSWORD_CHAR_CLASSES.each do |k, v|
     validates_format_of :password, :with => v, :message => :"must_contain_#{k}", :allow_blank => true, :if => Proc.new {Setting.password_required_char_classes.include?(k)}
   end
   validate :validate_password_length
+  validate :validate_password_complexity
   validate do
     if password_confirmation && password != password_confirmation
       errors.add(:password, :confirmation)
@@ -125,11 +127,11 @@ class User < Principal
   self.valid_statuses = [STATUS_ACTIVE, STATUS_REGISTERED, STATUS_LOCKED]
 
   before_validation :instantiate_email_address
-  before_create :set_mail_notification
   before_save   :generate_password_if_needed, :update_hashed_password
+  before_create :set_mail_notification
   before_destroy :remove_references_before_destroy
-  after_save :update_notified_project_ids, :destroy_tokens, :deliver_security_notification
   after_destroy :deliver_security_notification
+  after_save :update_notified_project_ids, :destroy_tokens, :deliver_security_notification
 
   scope :admin, (lambda do |*args|
     admin = args.size > 0 ? !!args.first : true
@@ -235,8 +237,6 @@ class User < Principal
     end
     user.update_last_login_on! if user && !user.new_record? && user.active?
     user
-  rescue => text
-    raise text
   end
 
   # Returns the user who matches the given autologin +key+ or nil
@@ -423,12 +423,6 @@ class User < Principal
     atom_token.value
   end
 
-  # TODO: remove in Redmine 6.0
-  def rss_key
-    ActiveSupport::Deprecation.warn "User.rss_key is deprecated and will be removed in Redmine 6.0. Please use User.atom_key instead."
-    atom_key
-  end
-
   # Return user's API key (a 40 chars long string), used to access the API
   def api_key
     if api_token.nil?
@@ -538,12 +532,6 @@ class User < Principal
 
   def self.find_by_atom_key(key)
     Token.find_active_user('feeds', key)
-  end
-
-  # TODO: remove in Redmine 6.0
-  def self.find_by_rss_key(key)
-    ActiveSupport::Deprecation.warn "User.find_by_rss_key is deprecated and will be removed in Redmine 6.0. Please use User.find_by_atom_key instead."
-    self.find_by_atom_key(key)
   end
 
   def self.find_by_api_key(key)
@@ -750,7 +738,7 @@ class User < Principal
       roles.any? do |role|
         (context.is_public? || role.member?) &&
         role.allowed_to?(action) &&
-        (block_given? ? yield(role, self) : true)
+        (block ? yield(role, self) : true)
       end
     elsif context && context.is_a?(Array)
       if context.empty?
@@ -769,7 +757,7 @@ class User < Principal
       roles = self.roles.to_a | [builtin_role]
       roles.any? do |role|
         role.allowed_to?(action) &&
-        (block_given? ? yield(role, self) : true)
+        (block ? yield(role, self) : true)
       end
     else
       false
@@ -854,12 +842,16 @@ class User < Principal
     self.pref.notify_about_high_priority_issues
   end
 
+  class CurrentUser < ActiveSupport::CurrentAttributes
+    attribute :user
+  end
+
   def self.current=(user)
-    RequestStore.store[:current_user] = user
+    CurrentUser.user = user
   end
 
   def self.current
-    RequestStore.store[:current_user] ||= User.anonymous
+    CurrentUser.user ||= User.anonymous
   end
 
   # Returns the anonymous user.  If the anonymous user does not exist, it is created.  There can be only
@@ -908,6 +900,16 @@ class User < Principal
     if !password.nil? && password.size < Setting.password_min_length.to_i
       errors.add(:password, :too_short, :count => Setting.password_min_length.to_i)
     end
+  end
+
+  def validate_password_complexity
+    return if password.blank? && generate_password?
+    return if password.nil?
+
+    # TODO: Enhance to check for more common and simple passwords
+    # like 'password', '123456', 'qwerty', etc.
+    bad_passwords = [login, firstname, lastname, mail] + email_addresses.map(&:address)
+    errors.add(:password, :too_simple) if bad_passwords.any? {|p| password.casecmp?(p)}
   end
 
   def instantiate_email_address

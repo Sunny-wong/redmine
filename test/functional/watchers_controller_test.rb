@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class WatchersControllerTest < Redmine::ControllerTest
   fixtures :projects, :users, :roles, :members, :member_roles, :enabled_modules,
@@ -86,7 +86,7 @@ class WatchersControllerTest < Redmine::ControllerTest
 
     assert_no_difference 'Watcher.count' do
       post :watch, :params => {:object_type => 'enabled_module', :object_id => m.id.to_s}, :xhr => true
-      assert_response 403
+      assert_response :forbidden
     end
   end
 
@@ -95,7 +95,7 @@ class WatchersControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 3
     assert_no_difference('Watcher.count') do
       post :watch, :params => {:object_type => 'issue', :object_id => '1'}, :xhr => true
-      assert_response 403
+      assert_response :forbidden
     end
   end
 
@@ -103,7 +103,7 @@ class WatchersControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 3
     assert_no_difference('Watcher.count') do
       post :watch, :params => {:object_type => 'foo', :object_id => '1'}, :xhr => true
-      assert_response 404
+      assert_response :not_found
     end
   end
 
@@ -111,7 +111,7 @@ class WatchersControllerTest < Redmine::ControllerTest
     @request.session[:user_id] = 3
     assert_no_difference('Watcher.count') do
       post :watch, :params => {:object_type => 'issue', :object_id => '999'}, :xhr => true
-      assert_response 404
+      assert_response :not_found
     end
   end
 
@@ -154,6 +154,12 @@ class WatchersControllerTest < Redmine::ControllerTest
     get :new, :params => {:object_type => 'issue', :object_id => '2'}, :xhr => true
     assert_response :success
     assert_match /ajax-modal/, response.body
+  end
+
+  def test_new_as_html_should_respond_with_404
+    @request.session[:user_id] = 2
+    get :new, :params => {:object_type => 'issue', :object_id => '2'}
+    assert_response :not_found
   end
 
   def test_new_for_message
@@ -575,7 +581,7 @@ class WatchersControllerTest < Redmine::ControllerTest
       delete :destroy, :params => {
         :object_type => 'issue', :object_id => '2', :user_id => '999'
       }
-      assert_response 404
+      assert_response :not_found
     end
   end
 end

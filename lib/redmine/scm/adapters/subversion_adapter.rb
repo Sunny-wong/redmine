@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -299,7 +299,7 @@ module Redmine
         end
 
         def target(path = '')
-          base = /^\//.match?(path) ? root_url : url
+          base = path.start_with?('/') ? root_url : url
           uri = "#{base}/#{path}"
           uri = Addressable::URI.encode(uri)
           shell_quote(uri.gsub(/[?<>\*]/, ''))

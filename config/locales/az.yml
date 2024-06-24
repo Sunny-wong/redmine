@@ -204,6 +204,7 @@ az:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   support:
     array:
@@ -536,7 +537,6 @@ az:
   label_jump_to_a_project: ... layihəyə keçid
   label_language_based: Dilin əsasında
   label_last_changes: "%{count} az dəyişiklik"
-  label_last_login: Sonuncu qoşulma
   label_last_month: sonuncu ay
   label_last_n_days: "son %{count} gün"
   label_last_week: sonuncu həftə
@@ -649,10 +649,6 @@ az:
   label_show_completed_versions: Bitmiş variantları göstərmək
   label_sort: Çeşidləmək
   label_sort_by: "%{value} üzrə çeşidləmək"
-  label_sort_higher: Yuxarı
-  label_sort_highest: Əvvələ qayıt
-  label_sort_lower: Aşağı
-  label_sort_lowest: Sona qayıt
   label_spent_time: Sərf olunan vaxt
   label_statistics: Statistika
   label_stay_logged_in: Sistemdə qalmaq
@@ -739,7 +735,6 @@ az:
   notice_account_password_updated: Parol müvəffəqiyyətlə yeniləndi.
   notice_account_pending: "Sizin uçot qeydiniz yaradıldı və inzibatçının təsdiqini gözləyir."
   notice_account_register_done: Uçot qeydi müvəffəqiyyətlə yaradıldı. Sizin uçot qeydinizin aktivləşdirilməsi üçün elektron poçtunuza göndərilən linkə keçin.
-  notice_account_unknown_email: Naməlum istifadəçi.
   notice_account_updated: Uçot qeydi müvəffəqiyyətlə yeniləndi.
   notice_account_wrong_password: Parol düzgün deyildir
   notice_can_t_change_password: Bu uçot qeydi üçün xarici autentifikasiya mənbəyi istifadə olunur. Parolu dəyişmək mümkün deyildir.
@@ -1360,7 +1355,7 @@ az:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1373,7 +1368,6 @@ az:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1570,3 +1564,23 @@ az:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

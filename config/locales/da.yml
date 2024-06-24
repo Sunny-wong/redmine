@@ -149,6 +149,7 @@ da:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
       template:
         header:
@@ -174,7 +175,6 @@ da:
   notice_account_password_updated: Kodeordet er opdateret.
   notice_account_wrong_password: Forkert kodeord
   notice_account_register_done: Kontoen er oprettet. For at aktivere kontoen skal du klikke på linket i den tilsendte email.
-  notice_account_unknown_email: Ukendt bruger.
   notice_can_t_change_password: Denne konto benytter en ekstern sikkerhedsgodkendelse. Det er ikke muligt at skifte kodeord.
   notice_account_lost_email_sent: En email med instruktioner til at vælge et nyt kodeord er afsendt til dig.
   notice_account_activated: Din konto er aktiveret. Du kan nu logge ind.
@@ -382,7 +382,6 @@ da:
   label_help: Hjælp
   label_reported_issues: Rapporterede sager
   label_assigned_to_me_issues: Sager tildelt til mig
-  label_last_login: Sidste logintidspunkt
   label_registered_on: Registreret den
   label_activity: Aktivitet
   label_new: Ny
@@ -505,10 +504,6 @@ da:
   label_latest_revision_plural: Seneste revisioner
   label_view_revisions: Se revisioner
   label_max_size: Maksimal størrelse
-  label_sort_highest: Flyt til toppen
-  label_sort_higher: Flyt op
-  label_sort_lower: Flyt ned
-  label_sort_lowest: Flyt til bunden
   label_roadmap: Roadmap
   label_roadmap_due_in: Deadline
   label_roadmap_overdue: "%{value} forsinket"
@@ -1285,7 +1280,7 @@ da:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1298,7 +1293,6 @@ da:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1495,3 +1489,23 @@ da:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

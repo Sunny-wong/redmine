@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../../../test_helper', __FILE__)
+require_relative '../../../../../test_helper'
 
 class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
   if Object.const_defined?(:CommonMarker)
@@ -151,7 +151,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
         <p>This is some text<sup><a href="#fn-1" id="fnref-1">1</a></sup>.</p>
          <ol>
         <li id="fn-1">
-        <p>This is the foot note <a href="#fnref-1" aria-label="Back to content">↩</a></p>
+        <p>This is the foot note <a href="#fnref-1" aria-label="Back to reference 1">↩</a></p>
         </li>
         </ol>
       EXPECTED
@@ -292,7 +292,7 @@ class Redmine::WikiFormatting::CommonMark::FormatterTest < ActionView::TestCase
       assert_kind_of Array, result
       assert_equal 2, result.size
       assert_equal expected, result.first, "section content did not match"
-      assert_equal Digest::MD5.hexdigest(expected), result.last, "section hash did not match"
+      assert_equal ActiveSupport::Digest.hexdigest(expected), result.last, "section hash did not match"
     end
   end
 end

@@ -3,6 +3,7 @@
 </div>
 
 <h2><%= @query.new_record? ? l(:label_gantt) : @query.name %></h2>
+<%= @query.persisted? && @query.description.present? ? content_tag('p', @query.description, class: 'subtitle') : '' %>
 
 <%= form_tag({:controller => 'gantts', :action => 'show',
              :project_id => @project, :month => params[:month],
@@ -23,23 +24,23 @@
   <fieldset id="options" class="collapsible collapsed">
     <legend onclick="toggleFieldset(this);" class="icon icon-collapsed"><%= l(:label_options) %></legend>
     <div style="display: none;">
-      <table>
-        <tr>
-          <td>
+      <div>
             <fieldset>
               <legend>
                 <%= l(:field_column_names) %>
               </legend>
+              <div id="list-definition">
+                <div>
               <label for="draw_selected_columns">
-                <%= check_box 'query', 'draw_selected_columns', :id => 'draw_selected_columns', 'data-enables' => 'span.query-columns select, span.query-columns input' %>
+                <%= check_box 'query', 'draw_selected_columns', :id => 'draw_selected_columns', 'data-enables' => '#list-definition .query-columns select, #list-definition .query-columns input' %>
                   <%= l(:label_display) %>
               </label>
+                </div>
+                <div>
               <%= render_query_columns_selection(@query) %>
+                </div>
+              </div>
             </fieldset>
-          </td>
-        </tr>
-        <tr>
-          <td>
             <fieldset>
               <legend><%= l(:label_related_issues) %></legend>
               <label for="draw_relations">
@@ -53,8 +54,6 @@
                 <% end %>
               </label>
             </fieldset>
-          </td>
-          <td>
             <fieldset>
               <legend><%= l(:label_gantt_progress_line) %></legend>
               <label for="draw_progress_line">
@@ -62,9 +61,7 @@
                 <%= l(:label_display) %>
               </label>
             </fieldset>
-          </td>
-        </tr>
-      </table>
+      </div>
     </div>
   </fieldset>
 </div>

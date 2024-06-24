@@ -166,6 +166,7 @@ gl:
         must_contain_digits: "debe conter díxitos (0-9)"
         must_contain_special_chars: "debe conter caracteres especiais (!, $, %, ...)"
         domain_not_allowed: "contén un dominio non permitido (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Por favor seleccione
 
@@ -393,7 +394,7 @@ gl:
   label_commits_per_author: Remisións por autor
   label_commits_per_month: Remisións por mes
   label_confirmation: Confirmación
-  label_contains: conten
+  label_contains: contén
   label_copied: copiado
   label_copy_workflow_from: Copiar fluxo de traballo dende
   label_current_status: Estado actual
@@ -471,7 +472,6 @@ gl:
   label_jump_to_a_project: Ir ao proxecto…
   label_language_based: Baseado no idioma
   label_last_changes: "últimos %{count} cambios"
-  label_last_login: "Último acceso"
   label_last_month: último mes
   label_last_n_days: "últimos %{count} días"
   label_last_week: última semana
@@ -515,7 +515,7 @@ gl:
   label_no_data: "Non hai ningún dato que mostrar."
   label_nobody: ninguén
   label_none: ningún
-  label_not_contains: non conten
+  label_not_contains: non contén
   label_not_equals: non igual
   label_open_issues: aberta
   label_open_issues_plural: abertas
@@ -580,10 +580,6 @@ gl:
   label_settings: Configuración
   label_show_completed_versions: Mostra as versións rematadas
   label_sort_by: "Ordenar por %{value}"
-  label_sort_higher: Subir
-  label_sort_highest: Primeiro
-  label_sort_lower: Baixar
-  label_sort_lowest: Último
   label_spent_time: Tempo dedicado
   label_statistics: Estatísticas
   label_stay_logged_in: "Lembrar o contrasinal."
@@ -642,7 +638,6 @@ gl:
   notice_account_password_updated: Contrasinal modificado correctamente.
   notice_account_pending: "A súa conta creouse e está pendente da aprobación por parte do administrador."
   notice_account_register_done: "A conta creouse correctamente. Recibirá unha ligazón na súa conta de correo electrónico, sígaa para activar a nova conta."
-  notice_account_unknown_email: Usuario descoñecido.
   notice_account_updated: Conta actualizada correctamente.
   notice_account_wrong_password: Contrasinal incorrecto.
   notice_can_t_change_password: Esta conta utiliza unha fonte de autenticación externa. Non é posible cambiar o contrasinal.
@@ -1275,7 +1270,7 @@ gl:
   label_trackers_description: Descricións dos tipos de tarefas
   label_open_trackers_description: Ver as descricións de todos os tipos de tarefas
   label_preferred_body_part_text: Texto
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Asunto da tarefa pai
   permission_edit_own_issues: Editar as propias tarefas
   text_select_apply_tracker: Seleccionar o tipo de tarefa
@@ -1288,7 +1283,6 @@ gl:
   text_gs_available: Soporte de PDF ImageMagick dispoñible (opcional)
   field_recently_used_projects: Número de proxectos recentemente usados no despregable de proxectos
   label_optgroup_bookmarks: Favoritos
-  label_optgroup_others: Outros proxectos
   label_optgroup_recents: Usado recentemente
   button_project_bookmark: Engadir favoritos
   button_project_bookmark_delete: Borrar favoritos
@@ -1436,7 +1430,7 @@ gl:
     for_all_projects: Para todos os proxectos
     for_current_project: Para o proxecto actual
     for_all_users: Para todos os usuarios
-    for_this_user: For this user
+    for_this_user: Para este usuario
   text_allowed_queries_to_select: Soamente seleccionables consultas públicas (para calquera usuario)
   text_all_migrations_have_been_run: Foron executadas todas as migracións de base de datos
   button_save_object: Gardar %{object_name}
@@ -1479,8 +1473,27 @@ gl:
   label_edited: Editado
   label_time_by_author: "%{time} por %{author}"
   field_default_time_entry_activity: Actividade por defecto para o tempo imputado
-  field_is_member_of_group: Member of group
-  text_users_bulk_destroy_head: You are about to delete the following users and remove
-    all references to them. This cannot be undone. Often, locking users instead of deleting
-    them is the better solution.
-  text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  field_is_member_of_group: Membro do grupo
+  text_users_bulk_destroy_head: Vas borrar os seguintes usuarios e quitar todas as
+    referencias a eles. Isto non pode desfacerse. En xeral, bloquear os usuarios en troques de borralos
+    é a mellor solución.
+  text_users_bulk_destroy_confirm: Para confirmar por favor teclee "%{yes}" debaixo.
+  permission_select_project_publicity: Configurar o proxecto coma público ou privado
+  label_auto_watch_on_issue_created: Tarefas creadas por min
+  field_any_searchable: Calquera texto buscable
+  label_contains_any_of: contén calquera de
+  button_apply_issues_filter: Aplicar os filtro de tarefas
+  label_view_previous_annotation: Ver anotación anterior a este cambio
+  label_has_been: ten sido
+  label_has_never_been: nunca ten sido
+  label_changed_from: cambiou de
+  label_issue_statuses_description: Descrición dos estados das tarefas
+  label_open_issue_statuses_description: Ver todas as descricións dos estados das tarefas
+  text_select_apply_issue_status: Seleccionar estado da tarefa
+  field_name_or_email_or_login: Nome, correo electrónico ou usuario
+  text_default_active_job_queue_changed: Cambiado o adaptador do sistema de colas por defecto dado que só está pensado para desenvolvemento/probas
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

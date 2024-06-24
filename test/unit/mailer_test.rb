@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class MailerTest < ActiveSupport::TestCase
   include Redmine::I18n
@@ -199,6 +199,18 @@ class MailerTest < ActiveSupport::TestCase
     end
   end
 
+  def test_thumbnail_macro_in_email
+    set_tmp_attachments_directory
+    issue = Issue.generate!(:description => '{{thumbnail(image.png)}}')
+    issue.attachments << Attachment.new(:file => mock_file_with_options(:original_filename => 'image.png'), :author => User.find(1))
+    issue.save!
+
+    assert Mailer.deliver_issue_add(issue)
+    assert_select_email do
+      assert_select 'img[alt="image.png"]'
+    end
+  end
+
   def test_email_headers
     with_settings :mail_from => 'Redmine <redmine@example.net>' do
       issue = Issue.find(1)
@@ -210,6 +222,7 @@ class MailerTest < ActiveSupport::TestCase
     # List-Id should not include the display name "Redmine"
     assert_equal '<redmine.example.net>', mail.header['List-Id'].to_s
     assert_equal 'Bug', mail.header['X-Redmine-Issue-Tracker'].to_s
+    assert_equal 'Low', mail.header['X-Redmine-Issue-Priority'].to_s
   end
 
   def test_email_headers_should_include_sender
@@ -658,7 +671,7 @@ class MailerTest < ActiveSupport::TestCase
     ActionMailer::Base.deliveries.clear
     with_settings :notified_events => %w(issue_added) do
       cf = IssueCustomField.generate!
-      issue = Issue.generate!
+      issue = Issue.generate!(:parent => Issue.find(1))
       Mailer.deliver_issue_add(issue)
 
       assert_not_equal 0, ActionMailer::Base.deliveries.size
@@ -667,6 +680,7 @@ class MailerTest < ActiveSupport::TestCase
       assert_mail_body_match /^\* Author: /, mail
       assert_mail_body_match /^\* Status: /, mail
       assert_mail_body_match /^\* Priority: /, mail
+      assert_mail_body_match /^\* Parent task: /, mail
 
       assert_mail_body_no_match /^\* Assignee: /, mail
       assert_mail_body_no_match /^\* Category: /, mail

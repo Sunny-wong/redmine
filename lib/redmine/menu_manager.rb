@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -292,6 +292,8 @@ module Redmine
           target_root = @menu_items.root
         end
 
+        target_root.children.reject! {|item| item.name == name}
+
         # menu item position
         if first = options.delete(:first)
           target_root.prepend(MenuItem.new(name, url, options))
@@ -367,9 +369,9 @@ module Redmine
         @children.inject(1) {|sum, node| sum + node.size}
       end
 
-      def each(&block)
+      def each(...)
         yield self
-        children {|child| child.each(&block)}
+        children {|child| child.each(...)}
       end
 
       # Adds a child at first position
@@ -379,9 +381,7 @@ module Redmine
 
       # Adds a child at given position
       def add_at(child, position)
-        raise "Child already added" if find {|node| node.name == child.name}
-
-        @children = @children.insert(position, child)
+        @children.insert(position, child)
         child.parent = self
         child
       end
@@ -453,7 +453,7 @@ module Redmine
         @parent = options[:parent]
         @child_menus = options[:children]
         @last = options[:last] || false
-        super @name.to_sym
+        super(@name.to_sym)
       end
 
       def caption(project=nil)

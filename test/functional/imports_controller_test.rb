@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class ImportsControllerTest < Redmine::ControllerTest
   fixtures :projects, :enabled_modules,
@@ -61,7 +61,7 @@ class ImportsControllerTest < Redmine::ControllerTest
           :file => uploaded_test_file('import_issues.csv', 'text/csv')
         }
       )
-      assert_response 302
+      assert_response :found
     end
     assert_equal 2, import.user_id
     assert_match /\A[0-9a-f]+\z/, import.filename
@@ -123,7 +123,7 @@ class ImportsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     import.reload
     assert_equal 2, import.total_items
   end
@@ -142,7 +142,7 @@ class ImportsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 200
+    assert_response :ok
     import.reload
     assert_nil import.total_items
     assert_select 'div#flash_error', /not a valid UTF-8 encoded file/
@@ -162,7 +162,7 @@ class ImportsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 200
+    assert_response :ok
     import.reload
     assert_nil import.total_items
     assert_select 'div#flash_error', /not a valid Shift_JIS encoded file/
@@ -182,7 +182,7 @@ class ImportsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 200
+    assert_response :ok
     import.reload
     assert_nil import.total_items
 
@@ -203,7 +203,7 @@ class ImportsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 200
+    assert_response :ok
     import.reload
     assert_equal 0, import.total_items
 

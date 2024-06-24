@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class AttachmentTest < ActiveSupport::TestCase
   fixtures :users, :email_addresses, :projects, :roles, :members, :member_roles,
@@ -520,6 +520,7 @@ class AttachmentTest < ActiveSupport::TestCase
   def test_thumbnailable_should_be_true_for_images
     skip unless convert_installed?
     assert_equal true, Attachment.new(:filename => 'test.jpg').thumbnailable?
+    assert_equal true, Attachment.new(:filename => 'test.webp').thumbnailable?
   end
 
   def test_thumbnailable_should_be_false_for_images_if_convert_is_unavailable
@@ -622,6 +623,25 @@ class AttachmentTest < ActiveSupport::TestCase
           "8e0294de2441577c529f170b6fb8f638_2654_#{generated_size}.thumb",
           File.basename(thumbnail))
       end
+    ensure
+      set_tmp_attachments_directory
+    end
+
+    def test_thumbnail_should_timeout
+      dummy_pid = 37530
+      Process.stubs(:spawn).returns(dummy_pid)
+      Process.stubs(:wait2).raises(Timeout::Error)
+      Process.stubs(:kill).returns(1)
+      Process.stubs(:wait).returns(dummy_pid)
+      Rails.logger.expects(:error).with(regexp_matches(/Creating thumbnail timed out/))
+
+      set_fixtures_attachments_directory
+      Attachment.clear_thumbnails
+
+      attachment = Attachment.find(16)
+      thumbnail = attachment.thumbnail
+
+      assert_nil thumbnail
     ensure
       set_tmp_attachments_directory
     end

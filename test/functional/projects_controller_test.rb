@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class ProjectsControllerTest < Redmine::ControllerTest
   fixtures :projects, :versions, :users, :email_addresses, :roles, :members,
@@ -252,6 +252,29 @@ class ProjectsControllerTest < Redmine::ControllerTest
     assert_select ".total-for-cf-#{field.id} span.value", :text => '9'
   end
 
+  def test_index_with_last_activity_date_column
+    with_settings :project_list_defaults => {'column_names' => %w(name short_description last_activity_date)} do
+      get :index, :params => {
+        :display_type => 'list'
+      }
+      assert_response :success
+    end
+    assert_equal ['Name', 'Description', 'Last activity'], columns_in_list
+    activity_time = Journal.find(3).created_on
+    assert_select "tr#project-1 td.last_activity_date a[href=?]",
+      project_activity_path(Project.find(1), :from => User.current.time_to_date(activity_time)),
+      :text => format_time(activity_time)
+    assert_select 'tr#project-4 td.last_activity_date', :text => ''
+  end
+
+  def test_index_with_query
+    query = ProjectQuery.find(11)
+    get :index, :params => { :query_id => query.id }
+    assert_response :success
+    assert_select 'h2', :text => query.name
+    assert_select '#sidebar a.query.selected[title=?]', query.description, :text => query.name
+  end
+
   def test_index_should_retrieve_default_query
     query = ProjectQuery.find(11)
     ProjectQuery.stubs(:default).returns query
@@ -260,6 +283,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
       @request.session[:user_id] = user_id
       get :index
       assert_select 'h2', text: query.name
+      assert_select '#sidebar a.query.selected[title=?]', query.description, :text => query.name
     end
   end
 
@@ -407,6 +431,22 @@ class ProjectsControllerTest < Redmine::ControllerTest
     end
   end
 
+  def test_new_by_non_admin_should_enable_setting_public_if_default_role_is_allowed_to_set_public
+    Role.non_member.add_permission!(:add_project)
+    default_role = Role.generate!(permissions: [:add_project])
+    user = User.generate!
+    @request.session[:user_id] = user.id
+
+    with_settings new_project_user_role_id: default_role.id.to_s do
+      get :new
+      assert_select 'input[name=?][disabled=disabled]', 'project[is_public]'
+
+      default_role.add_permission!(:select_project_publicity)
+      get :new
+      assert_select 'input[name=?]:not([disabled])', 'project[is_public]'
+    end
+  end
+
   def test_new_should_not_display_invalid_search_link
     @request.session[:user_id] = 1
 
@@ -504,7 +544,6 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :name => "blog",
           :description => "weblog",
           :identifier => "blog",
-          :is_public => 1,
           :custom_field_values => {
             '3' => 'Beta'
           },
@@ -518,13 +557,51 @@ class ProjectsControllerTest < Redmine::ControllerTest
     project = Project.find_by_name('blog')
     assert_kind_of Project, project
     assert_equal 'weblog', project.description
-    assert_equal true, project.is_public?
     assert_equal [1, 3], project.trackers.map(&:id).sort
     assert_equal ['issue_tracking', 'news', 'repository'], project.enabled_module_names.sort
 
     # User should be added as a project member
     assert User.find(9).member_of?(project)
     assert_equal 1, project.members.size
+  end
+
+  test "#create by user without select_project_publicity permission should not create a new private project" do
+    Role.non_member.add_permission! :add_project
+    default_role = Project.default_member_role
+    default_role.remove_permission!(:select_project_publicity)
+    @request.session[:user_id] = 9
+
+    post(
+      :create, :params => {
+        :project => {
+          :name => "blog",
+          :identifier => "blog",
+          :enabled_module_names => ['issue_tracking', 'news', 'repository'],
+          :is_public => 0
+        }
+      }
+    )
+
+    project = Project.find_by_name('blog')
+    assert_equal true, project.is_public?
+  end
+
+  test "#create by non-admin user with add_project and select_project_publicity permission should create a new private project" do
+    @request.session[:user_id] = 2
+
+    post(
+      :create, :params => {
+        :project => {
+          :name => "blog",
+          :identifier => "blog",
+          :enabled_module_names => ['issue_tracking', 'news', 'repository'],
+          :is_public => 0
+        }
+      }
+    )
+
+    project = Project.find_by_name('blog')
+    assert_equal false, project.is_public?
   end
 
   test "#create by non-admin user with add_project permission should fail with parent_id" do
@@ -679,7 +756,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
     project = Project.order('id desc').first
     assert_equal 'inherited', project.name
@@ -774,7 +851,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     project = Project.find_by_identifier('ecookbook')
     project.archive
     get(:show, :params => {:id => 'ecookbook'})
-    assert_response 403
+    assert_response :forbidden
     assert_select 'p', :text => /archived/
     assert_not_include project.name, response.body
   end
@@ -784,7 +861,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     project = Project.find_by_identifier('ecookbook')
     project.archive
     get(:show, :params => {:id => 'ecookbook'})
-    assert_response 403
+    assert_response :forbidden
     assert_select 'a', :text => "Unarchive"
   end
 
@@ -855,13 +932,13 @@ class ProjectsControllerTest < Redmine::ControllerTest
     Project.find(1).close
     @request.session[:user_id] = 2 # manager
     get(:settings, :params => {:id => 1})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_settings_should_be_denied_for_anonymous_on_closed_project
     Project.find(1).close
     get(:settings, :params => {:id => 1})
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_settings_should_accept_version_status_filter
@@ -950,7 +1027,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     role.permissions = []
     role.save
     get(:settings, :params => {:id => project.id})
-    assert_response 403
+    assert_response :forbidden
 
     role.add_permission! :manage_repository, :manage_boards, :manage_project_activities
     get(:settings, :params => {:id => project.id})
@@ -1040,7 +1117,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 403
+    assert_response :forbidden
     assert_equal 'eCookbook', Project.find(1).name
   end
 
@@ -1055,7 +1132,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 403
+    assert_response :forbidden
     assert_equal 'eCookbook', Project.find(1).name
   end
 
@@ -1073,7 +1150,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_match /Successful update/, flash[:notice]
   end
 
@@ -1255,7 +1332,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
           :confirm => 'ecookbook'
         }
       )
-      assert_response 403
+      assert_response :forbidden
     end
     assert Project.find(1)
   end
@@ -1263,7 +1340,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def test_bulk_destroy_should_require_admin
     @request.session[:user_id] = 2 # non-admin
     delete :bulk_destroy, params: { ids: [1, 2], confirm: 'Yes' }
-    assert_response 403
+    assert_response :forbidden
   end
 
   def test_bulk_destroy_should_require_confirmation
@@ -1273,7 +1350,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
     end
     assert Project.find(1)
     assert Project.find(2)
-    assert_response 200
+    assert_response :ok
   end
 
   def test_bulk_destroy_should_delete_projects
@@ -1350,7 +1427,7 @@ class ProjectsControllerTest < Redmine::ControllerTest
   def test_get_copy_with_invalid_source_should_respond_with_404
     @request.session[:user_id] = 1
     get(:copy, :params => {:id => 99})
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_get_copy_should_preselect_custom_fields

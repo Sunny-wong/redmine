@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -117,7 +117,7 @@ module Redmine
         return @number_of_rows if @number_of_rows
 
         rows = projects.inject(0) {|total, p| total += number_of_rows_on_project(p)}
-        rows > @max_rows ? @max_rows : rows
+        [rows, @max_rows].min
       end
 
       # Returns the number of rows that will be used to list a project on
@@ -198,7 +198,7 @@ module Redmine
 
       # Returns the distinct versions of the issues that belong to +project+
       def project_versions(project)
-        project_issues(project).collect(&:fixed_version).compact.uniq
+        project_issues(project).filter_map(&:fixed_version).uniq
       end
 
       # Returns the issues that belong to +project+ and are assigned to +version+
@@ -270,8 +270,8 @@ module Redmine
 
       def render_object_row(object, options)
         class_name = object.class.name.downcase
-        send("subject_for_#{class_name}", object, options) unless options[:only] == :lines || options[:only] == :selected_columns
-        send("line_for_#{class_name}", object, options) unless options[:only] == :subjects || options[:only] == :selected_columns
+        send(:"subject_for_#{class_name}", object, options) unless options[:only] == :lines || options[:only] == :selected_columns
+        send(:"line_for_#{class_name}", object, options) unless options[:only] == :subjects || options[:only] == :selected_columns
         column_content_for_issue(object, options) if options[:only] == :selected_columns && options[:column].present? && object.is_a?(Issue)
         options[:top] += options[:top_increment]
         @number_of_rows += 1
@@ -361,14 +361,14 @@ module Redmine
       end
 
       def subject(label, options, object=nil)
-        send "#{options[:format]}_subject", options, label, object
+        send :"#{options[:format]}_subject", options, label, object
       end
 
       def line(start_date, end_date, done_ratio, markers, label, options, object=nil)
         options[:zoom] ||= 1
         options[:g_width] ||= (self.date_to - self.date_from + 1) * options[:zoom]
         coords = coordinates(start_date, end_date, done_ratio, options[:zoom])
-        send "#{options[:format]}_task", options, coords, markers, label, object
+        send :"#{options[:format]}_task", options, coords, markers, label, object
       end
 
       # Generates a gantt image
@@ -420,7 +420,7 @@ module Redmine
             gc.stroke('transparent')
             gc.strokewidth(1)
             gc.draw('text %d,%d %s' % [
-              left.round + 8, 14, Redmine::Utils::Shell.shell_quote("#{month_f.year}-#{month_f.month}")
+              left.round + 8, 14, magick_text("#{month_f.year}-#{month_f.month}")
             ])
             left = left + width
             month_f = month_f >> 1
@@ -456,7 +456,7 @@ module Redmine
               gc.stroke('transparent')
               gc.strokewidth(1)
               gc.draw('text %d,%d %s' % [
-                left.round + 2, header_height + 14, Redmine::Utils::Shell.shell_quote(week_f.cweek.to_s)
+                left.round + 2, header_height + 14, magick_text(week_f.cweek.to_s)
               ])
               left = left + width
               week_f = week_f + 7
@@ -765,7 +765,7 @@ module Redmine
           tag_options[:id] = "issue-#{object.id}"
           tag_options[:class] = "issue-subject hascontextmenu"
           tag_options[:title] = object.subject
-          children = object.children & project_issues(object.project)
+          children = object.leaf? ? [] : object.children & project_issues(object.project)
           has_children =
             children.present? &&
               (children.collect(&:fixed_version).uniq & [object.fixed_version]).present?
@@ -822,7 +822,7 @@ module Redmine
         params[:image].stroke('transparent')
         params[:image].strokewidth(1)
         params[:image].draw('text %d,%d %s' % [
-          params[:indent], params[:top] + 2, Redmine::Utils::Shell.shell_quote(subject)
+          params[:indent], params[:top] + 2, magick_text(subject)
         ])
       end
 
@@ -1072,9 +1072,15 @@ module Redmine
           params[:image].draw('text %d,%d %s' % [
             params[:subject_width] + (coords[:bar_end] || 0) + 5,
             params[:top] + 1,
-            Redmine::Utils::Shell.shell_quote(label)
+            magick_text(label)
           ])
         end
+      end
+
+      # Escape the passed string as a text argument in a draw rule for
+      # mini_magick. Note that the returned string is not shell-safe on its own.
+      def magick_text(str)
+        "'#{str.to_s.gsub(/['\\]/, '\\\\\0')}'"
       end
     end
   end

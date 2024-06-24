@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../../../test_helper', __FILE__)
+require_relative '../../../../../test_helper'
 
 class Redmine::WikiFormatting::CommonMark::ApplicationHelperTest < Redmine::HelperTest
   if Object.const_defined?(:CommonMarker)
@@ -62,5 +62,33 @@ class Redmine::WikiFormatting::CommonMark::ApplicationHelperTest < Redmine::Help
       end
     end
 
+    def test_attached_image_alt_attribute_with_madkrown
+      attachments = Attachment.all
+      with_settings text_formatting: 'common_mark' do
+        # When alt text is set
+        assert_match %r[<img src=".+?" alt="alt text" loading=".+?">],
+          textilizable('![alt text](logo.gif)', attachments: attachments)
+
+        # When alt text is not set
+        assert_match %r[<img src=".+?" title="This is a logo" alt="This is a logo" loading=".+?">],
+          textilizable('![](logo.gif)', attachments: attachments)
+
+        # When alt text is not set and the attachment has no description
+        assert_match %r[<img src=".+?" alt="" loading=".+?">],
+          textilizable('![](testfile.PNG)', attachments: attachments)
+
+        # When no matching attachments are found
+        assert_match %r[<img src=".+?" alt="">],
+          textilizable('![](no-match.jpg)', attachments: attachments)
+        assert_match %r[<img src=".+?" alt="alt text">],
+          textilizable('![alt text](no-match.jpg)', attachments: attachments)
+
+        # When no attachment is registered
+        assert_match %r[<img src=".+?" alt="">],
+          textilizable('![](logo.gif)', attachments: [])
+        assert_match %r[<img src=".+?" alt="alt text">],
+          textilizable('![alt text](logo.gif)', attachments: [])
+      end
+    end
   end
 end

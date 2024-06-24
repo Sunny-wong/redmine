@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -20,9 +20,9 @@
 module Redmine
   module Preparation
     def self.prepare
-      ActiveRecord::Base.include Redmine::Acts::Positioned
-      ActiveRecord::Base.include Redmine::Acts::Mentionable
-      ActiveRecord::Base.include Redmine::I18n
+      ApplicationRecord.include Redmine::Acts::Positioned
+      ApplicationRecord.include Redmine::Acts::Mentionable
+      ApplicationRecord.include Redmine::I18n
 
       Scm::Base.add "Subversion"
       Scm::Base.add "Mercurial"
@@ -39,6 +39,7 @@ module Redmine
         map.permission :edit_project, {:projects => [:settings, :edit, :update]}, :require => :member
         map.permission :close_project, {:projects => [:close, :reopen]}, :require => :member, :read => true
         map.permission :delete_project, {:projects => :destroy}, :require => :member, :read => true
+        map.permission :select_project_publicity, {}, :require => :member
         map.permission :select_project_modules, {:projects => :modules}, :require => :member
         map.permission :view_members, {:members => [:index, :show]}, :public => true, :read => true
         map.permission :manage_members, {:projects => :settings, :members => [:index, :show, :new, :create, :edit, :update, :destroy, :autocomplete]}, :require => :member
@@ -72,7 +73,6 @@ module Redmine
           map.permission :view_private_notes, {}, :read => true, :require => :member
           map.permission :set_notes_private, {}, :require => :member
           map.permission :delete_issues, {:issues => :destroy}, :require => :member
-          map.permission :mention_users, {}
           # Watchers
           map.permission :view_issue_watchers, {}, :read => true
           map.permission :add_issue_watchers, {:watchers => [:new, :create, :append, :autocomplete_for_user, :autocomplete_for_mention]}
@@ -367,7 +367,7 @@ module Redmine
         menu.push :repository,
                   {:controller => 'repositories', :action => 'show',
                    :repository_id => nil, :path => nil, :rev => nil},
-                  :if => Proc.new {|p| p.repositories.any? {|r| !r.new_record?}}
+                  :if => Proc.new {|p| p.repositories.exists?}
         menu.push :settings, {:controller => 'projects', :action => 'settings'},
                   :last => true
       end

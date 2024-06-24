@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
   tests IssuesController
@@ -300,7 +300,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 302
+      assert_response :found
     end
 
     assert_equal users_to_test.keys.size, ActionMailer::Base.deliveries.size
@@ -323,7 +323,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
     # anonymous user is never notified
     users_to_test = @users_to_test.reject {|k, v| k.anonymous?}
 
-    users_to_test.keys.each do |user|
+    users_to_test.each_key do |user|
       Watcher.create!(:user => user, :watchable => @issue)
     end
     ActionMailer::Base.deliveries.clear
@@ -341,7 +341,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     assert_equal users_to_test.keys.size, ActionMailer::Base.deliveries.size
     # tests that each user receives 1 email with the custom fields he is allowed to see only
     users_to_test.each do |user, fields|
@@ -362,7 +362,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
     # anonymous user is never notified
     users_to_test = @users_to_test.reject {|k, v| k.anonymous?}
 
-    users_to_test.keys.each do |user|
+    users_to_test.each_key do |user|
       Watcher.create!(:user => user, :watchable => @issue)
     end
     ActionMailer::Base.deliveries.clear
@@ -378,7 +378,7 @@ class IssuesCustomFieldsVisibilityTest < Redmine::ControllerTest
         }
       }
     )
-    assert_response 302
+    assert_response :found
     users_to_test.each do |user, fields|
       mails = ActionMailer::Base.deliveries.select {|m| m.to.include? user.mail}
       if (fields & [@field2, @field3]).any?

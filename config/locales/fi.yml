@@ -162,6 +162,7 @@ fi:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Valitse, ole hyvä
 
@@ -182,7 +183,6 @@ fi:
   notice_account_password_updated: Salasanan päivitys onnistui.
   notice_account_wrong_password: Väärä salasana
   notice_account_register_done: Tilin luonti onnistui. Aktivoidaksesi tilin seuraa linkkiä joka välitettiin sähköpostiisi.
-  notice_account_unknown_email: Tuntematon käyttäjä.
   notice_can_t_change_password: Tämä tili käyttää ulkoista tunnistautumisjärjestelmää. Salasanaa ei voi muuttaa.
   notice_account_lost_email_sent: Sinulle on lähetetty sähköposti jossa on ohje kuinka vaihdat salasanasi.
   notice_account_activated: Tilisi on nyt aktivoitu, voit kirjautua sisälle.
@@ -378,7 +378,6 @@ fi:
   label_help: Ohjeet
   label_reported_issues: Raportoidut tapahtumat
   label_assigned_to_me_issues: Minulle nimetyt tapahtumat
-  label_last_login: Viimeinen yhteys
   label_registered_on: Rekisteröity
   label_activity: Historia
   label_new: Uusi
@@ -490,10 +489,6 @@ fi:
   label_latest_revision_plural: Viimeisimmät versiot
   label_view_revisions: Näytä versiot
   label_max_size: Suurin koko
-  label_sort_highest: Siirrä ylimmäiseksi
-  label_sort_higher: Siirrä ylös
-  label_sort_lower: Siirrä alas
-  label_sort_lowest: Siirrä alimmaiseksi
   label_roadmap: Roadmap
   label_roadmap_due_in: "Määräaika %{value}"
   label_roadmap_overdue: "%{value} myöhässä"
@@ -1289,7 +1284,7 @@ fi:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1302,7 +1297,6 @@ fi:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1499,3 +1493,23 @@ fi:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

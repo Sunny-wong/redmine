@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class MailHandlerControllerTest < Redmine::ControllerTest
   fixtures :users, :email_addresses, :projects, :enabled_modules,
@@ -49,7 +49,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
         )
       end
     end
-    assert_response 201
+    assert_response :created
   end
 
   def test_should_create_issue_with_options
@@ -74,7 +74,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
         )
       end
     end
-    assert_response 201
+    assert_response :created
     issue = Issue.order(:id => :desc).first
     assert_equal true, issue.is_private
   end
@@ -97,7 +97,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
         end
       end
     end
-    assert_response 201
+    assert_response :created
   end
 
   def test_should_respond_with_422_if_not_created
@@ -117,7 +117,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
         )
       end
     end
-    assert_response 422
+    assert_response :unprocessable_content
   end
 
   def test_should_not_allow_with_api_disabled
@@ -137,7 +137,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
         )
       end
     end
-    assert_response 403
+    assert_response :forbidden
     assert_include 'Access denied', response.body
   end
 
@@ -157,7 +157,7 @@ class MailHandlerControllerTest < Redmine::ControllerTest
         )
       end
     end
-    assert_response 403
+    assert_response :forbidden
     assert_include 'Access denied', response.body
   end
 

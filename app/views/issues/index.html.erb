@@ -19,6 +19,7 @@
 
 <h2><%= @query.new_record? ? l(:label_issue_plural) : @query.name %></h2>
 <% html_title(@query.new_record? ? l(:label_issue_plural) : @query.name) %>
+<%= @query.persisted? && @query.description.present? ? content_tag('p', @query.description, class: 'subtitle') : '' %>
 
 <%= form_tag(_project_issues_path(@project), :method => :get, :id => 'query_form') do %>
   <%= render :partial => 'queries/query_form' %>
@@ -59,6 +60,7 @@
     </fieldset>
   <% end %>
   <%= export_csv_encoding_select_tag %>
+  <%= export_csv_separator_select_tag %>
   <% if @issue_count > Setting.issues_export_limit.to_i %>
   <p class="icon icon-warning">
     <%= l(:setting_issues_export_limit) %>: <%= Setting.issues_export_limit.to_i %>

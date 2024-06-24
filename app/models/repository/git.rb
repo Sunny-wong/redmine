@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 # Copyright (C) 2007  Patrick Aljord patcito@ŋmail.com
 #
 # This program is free software; you can redistribute it and/or
@@ -133,9 +133,9 @@ class Repository::Git < Repository
     scm_brs = branches
     return if scm_brs.blank?
 
-    h = extra_info&.dup || {}
+    h = extra_info.dup || {}
     repo_heads = scm_brs.map(&:scmid)
-    prev_db_heads = h["heads"]&.dup || []
+    prev_db_heads = h["heads"].dup || []
     prev_db_heads += heads_from_branches_hash if prev_db_heads.empty?
     return if prev_db_heads.sort == repo_heads.sort
 
@@ -213,7 +213,7 @@ class Repository::Git < Repository
   private :save_revisions
 
   def save_revision(rev)
-    parents = (rev.parents || []).collect{|rp| find_changeset_by_name(rp)}.compact
+    parents = (rev.parents || []).filter_map{|rp| find_changeset_by_name(rp)}
     changeset =
       Changeset.create(
         :repository   => self,
@@ -230,7 +230,7 @@ class Repository::Git < Repository
   private :save_revision
 
   def heads_from_branches_hash
-    h = extra_info&.dup || {}
+    h = extra_info.dup || {}
     h["branches"] ||= {}
     h['branches'].map{|br, hs| hs['last_scmid']}
   end

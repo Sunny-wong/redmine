@@ -138,6 +138,7 @@ mk:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Изберете
 
@@ -158,7 +159,6 @@ mk:
   notice_account_password_updated: Лозинката е успешно ажурирана.
   notice_account_wrong_password: Погрешна лозинка
   notice_account_register_done: Профилот е успешно креиран. За активација, клкнете на врската што ви е пратена по е-пошта.
-  notice_account_unknown_email: Непознат корисник.
   notice_can_t_change_password: This account uses an external authentication source. Impossible to change the password.
   notice_account_lost_email_sent: An email with instructions to choose a new password has been sent to you.
   notice_account_activated: Your account has been activated. You can now log in.
@@ -482,7 +482,6 @@ mk:
   label_help: Помош
   label_reported_issues: Пријавени задачи
   label_assigned_to_me_issues: Задачи доделени на мене
-  label_last_login: Последна најава
   label_registered_on: Регистриран на
   label_activity: Активност
   label_user_activity: "Активност на %{value}"
@@ -617,10 +616,6 @@ mk:
   label_view_revisions: Прегледај ги ревизиите
   label_view_all_revisions: Прегледај ги сите ревизии
   label_max_size: Макс. големина
-  label_sort_highest: Премести најгоре
-  label_sort_higher: Премести нагоре
-  label_sort_lower: Премести надоле
-  label_sort_lowest: Премести најдоле
   label_roadmap: Roadmap
   label_roadmap_due_in: "Due in %{value}"
   label_roadmap_overdue: "Касни %{value}"
@@ -1268,7 +1263,7 @@ mk:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1281,7 +1276,6 @@ mk:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1478,3 +1472,23 @@ mk:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

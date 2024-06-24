@@ -135,6 +135,7 @@ th:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: กรุณาเลือก
 
@@ -155,7 +156,6 @@ th:
   notice_account_password_updated: รหัสได้ถูกปรับปรุงแล้ว.
   notice_account_wrong_password: รหัสผ่านไม่ถูกต้อง
   notice_account_register_done: บัญชีถูกสร้างแล้ว. กรุณาเช็คเมล์ แล้วคลิ๊กที่ลิงค์ในอีเมล์เพื่อเปิดใช้บัญชี
-  notice_account_unknown_email: ไม่มีผู้ใช้ที่ใช้อีเมล์นี้.
   notice_can_t_change_password: บัญชีนี้ใช้การยืนยันตัวตนจากแหล่งภายนอก. ไม่สามารถปลี่ยนรหัสผ่านได้.
   notice_account_lost_email_sent: เราได้ส่งอีเมล์พร้อมวิธีการสร้างรหัีสผ่านใหม่ให้คุณแล้ว กรุณาเช็คเมล์.
   notice_account_activated: บัญชีของคุณได้เปิดใช้แล้ว. ตอนนี้คุณสามารถเข้าสู่ระบบได้แล้ว.
@@ -370,7 +370,6 @@ th:
   label_help: ช่วยเหลือ
   label_reported_issues: ปัญหาที่แจ้งไว้
   label_assigned_to_me_issues: ปัญหาที่มอบหมายให้ฉัน
-  label_last_login: ติดต่อครั้งสุดท้าย
   label_registered_on: ลงทะเบียนเมื่อ
   label_activity: กิจกรรม
   label_activity_plural: กิจกรรม
@@ -494,10 +493,6 @@ th:
   label_latest_revision_plural: รุ่นการแก้ไขล่าสุด
   label_view_revisions: ดูการแก้ไข
   label_max_size: ขนาดใหญ่สุด
-  label_sort_highest: ย้ายไปบนสุด
-  label_sort_higher: ย้ายขึ้น
-  label_sort_lower: ย้ายลง
-  label_sort_lowest: ย้ายไปล่างสุด
   label_roadmap: แผนงาน
   label_roadmap_due_in: "ถึงกำหนดใน %{value}"
   label_roadmap_overdue: "%{value} ช้ากว่ากำหนด"
@@ -1264,7 +1259,7 @@ th:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1277,7 +1272,6 @@ th:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1474,3 +1468,23 @@ th:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

@@ -136,6 +136,7 @@ sk:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Vyberte
 
@@ -156,7 +157,6 @@ sk:
   notice_account_password_updated: Heslo bolo úspešne zmenené.
   notice_account_wrong_password: Nesprávne heslo
   notice_account_register_done: Účet bol úspešne vytvorený. Účet aktivujete kliknutím na odkaz v emaile, ktorý vám bol zaslaný na %{email}.
-  notice_account_unknown_email: Neznámy používateľ.
   notice_can_t_change_password: Tento účet používa externú autentifikáciu. Nemôžete zmeniť heslo.
   notice_account_lost_email_sent: Bol vám zaslaný email s inštrukciami, ako si nastaviť nové heslo.
   notice_account_activated: Váš účet bol aktivovaný. Teraz se môžete prihlásiť.
@@ -370,7 +370,6 @@ sk:
   label_help: Pomoc
   label_reported_issues: Nahlásené úlohy
   label_assigned_to_me_issues: Moje úlohy
-  label_last_login: Posledné prihlásenie
   label_registered_on: Dátum registrácie
   label_activity: Aktivita
   label_new: Nový
@@ -493,10 +492,6 @@ sk:
   label_latest_revision_plural: Posledné revízie
   label_view_revisions: Zobraziť revízie
   label_max_size: Maximálna veľkosť
-  label_sort_highest: Presunúť na začiatok
-  label_sort_higher: Presunúť vyššie
-  label_sort_lower: Presunúť nižšie
-  label_sort_lowest: Presunúť na koniec
   label_roadmap: Plán
   label_roadmap_due_in: "Zostáva %{value}"
   label_roadmap_overdue: "%{value} meškanie"
@@ -1257,7 +1252,7 @@ sk:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1270,7 +1265,6 @@ sk:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1467,3 +1461,23 @@ sk:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

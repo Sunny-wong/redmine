@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -19,7 +19,7 @@
 
 require 'csv'
 
-class Import < ActiveRecord::Base
+class Import < ApplicationRecord
   has_many :items, :class_name => 'ImportItem', :dependent => :delete_all
   belongs_to :user
   serialize :settings
@@ -65,12 +65,14 @@ class Import < ActiveRecord::Base
 
   def set_default_settings(options={})
     separator = lu(user, :general_csv_separator)
+    wrapper = '"'
     encoding = lu(user, :general_csv_encoding)
     if file_exists?
       begin
         content = File.read(filepath, 256)
 
         separator = [',', ';'].max_by {|sep| content.count(sep)}
+        wrapper = ['"', "'"].max_by {|quote_char| content.count(quote_char)}
 
         guessed_encoding = Redmine::CodesetUtil.guess_encoding(content)
         encoding =
@@ -81,7 +83,6 @@ class Import < ActiveRecord::Base
       rescue => e
       end
     end
-    wrapper = '"'
 
     date_format = lu(user, "date.formats.default", :default => "foo")
     date_format = DATE_FORMATS.first unless DATE_FORMATS.include?(date_format)
@@ -94,7 +95,7 @@ class Import < ActiveRecord::Base
       'notifications' => '0'
     )
 
-    if options.key?(:project_id) && !options[:project_id].blank?
+    if options.key?(:project_id) && options[:project_id].present?
       # Do not fail if project doesn't exist
       begin
         project = Project.find(options[:project_id])
@@ -183,7 +184,7 @@ class Import < ActiveRecord::Base
   def do_callbacks(position, object)
     if callbacks = (settings['callbacks'] || {}).delete(position)
       callbacks.each do |name, args|
-        send "#{name}_callback", object, *args
+        send :"#{name}_callback", object, *args
       end
       save!
     end

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -54,7 +54,7 @@ module Redmine
     cattr_accessor :directory
     self.directory = PluginLoader.directory
 
-    # Absolute path to the plublic directory where plugins assets are copied
+    # Absolute path to the public directory where plugins assets are copied
     cattr_accessor :public_directory
     self.public_directory = PluginLoader.public_directory
 
@@ -71,7 +71,7 @@ module Redmine
         class_eval do
           names.each do |name|
             define_method(name) do |*args|
-              args.empty? ? instance_variable_get("@#{name}") : instance_variable_set("@#{name}", *args)
+              args.empty? ? instance_variable_get(:"@#{name}") : instance_variable_set(:"@#{name}", *args)
             end
           end
         end
@@ -125,7 +125,7 @@ module Redmine
       # Warn for potential settings[:partial] collisions
       if p.configurable?
         partial = p.settings[:partial]
-        if @used_partials[partial]
+        if @used_partials[partial] && @used_partials[partial] != p.id
           Rails.logger.warn(
             "WARNING: settings partial '#{partial}' is declared in '#{p.id}' plugin " \
               "but it is already used by plugin '#{@used_partials[partial]}'. " \
@@ -186,7 +186,21 @@ module Redmine
       path.assets_dir
     end
 
+    def asset_prefix
+      File.join(self.class.public_directory.basename, id.to_s)
+    end
+
+    def asset_paths
+      if path.has_assets_dir?
+        base_dir = Pathname.new(path.assets_dir)
+        paths = base_dir.children.filter_map{|child| child if child.directory? }
+        Redmine::AssetPath.new(base_dir, paths, asset_prefix)
+      end
+    end
+
     def <=>(plugin)
+      return nil unless plugin.is_a?(Plugin)
+
       self.id.to_s <=> plugin.id.to_s
     end
 
@@ -414,9 +428,21 @@ module Redmine
       Redmine::WikiFormatting.register(name, *args)
     end
 
+    # Register plugin models that use acts_as_attachable.
+    #
+    # Example:
+    #   attachment_object_type SomeAttachableModel
+    #
+    # This is necessary for the core attachments controller routes and attachments/_form to work.
+    def attachment_object_type(*args)
+      args.each do |klass|
+        Redmine::Acts::Attachable::ObjectTypeConstraint.register_object_type(klass.name.underscore.pluralize)
+      end
+    end
+
     # Returns +true+ if the plugin can be configured.
     def configurable?
-      settings && settings.is_a?(Hash) && !settings[:partial].blank?
+      settings && settings.is_a?(Hash) && settings[:partial].present?
     end
 
     # The directory containing this plugin's migrations (<tt>plugin/db/migrate</tt>)
@@ -465,7 +491,7 @@ module Redmine
           else
             migrations
           end
-        Migrator.new(:up, selected_migrations, schema_migration, target_version).migrate
+        Migrator.new(:up, selected_migrations, schema_migration, internal_metadata, target_version).migrate
       end
 
       def down(target_version = nil)
@@ -475,15 +501,15 @@ module Redmine
           else
             migrations
           end
-        Migrator.new(:down, selected_migrations, schema_migration, target_version).migrate
+        Migrator.new(:down, selected_migrations, schema_migration, internal_metadata, target_version).migrate
       end
 
       def run(direction, target_version)
-        Migrator.new(direction, migrations, schema_migration, target_version).run
+        Migrator.new(direction, migrations, schema_migration, internal_metadata, target_version).run
       end
 
       def open
-        Migrator.new(:up, migrations, schema_migration)
+        Migrator.new(:up, migrations, schema_migration, internal_metadata)
       end
 
       def current_version
@@ -508,7 +534,7 @@ module Redmine
           # Delete migrations that don't match .. to_i will work because the number comes first
           @all_versions ||= {}
           @all_versions[plugin.id.to_s] ||= begin
-            sm_table = ::ActiveRecord::SchemaMigration.table_name
+            sm_table = ::ActiveRecord::Base.connection.schema_migration.table_name
             migration_versions  = ActiveRecord::Base.connection.select_values("SELECT version FROM #{sm_table}")
             versions_by_plugins = migration_versions.group_by {|version| version.match(/-(.*)$/).try(:[], 1)}
             @all_versions       = versions_by_plugins.transform_values! {|versions| versions.map!(&:to_i).sort!}

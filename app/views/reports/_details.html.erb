@@ -1,7 +1,7 @@
 <% if @statuses.empty? or rows.empty? %>
     <p><i><%=l(:label_no_data)%></i></p>
 <% else %>
-<table class="list issue-report">
+<table class="list issue-report-detailed">
 <thead><tr>
 <th></th>
 <% for status in @statuses %>
@@ -32,6 +32,7 @@
   <h3 class="title"><%= l(:label_export_options, :export_format => 'CSV') %></h3>
   <%= form_tag(project_issues_report_details_path(@project, :detail => params[:detail], :format => 'csv'), :method => :get, :id => 'csv-export-form') do %>
   <%= export_csv_encoding_select_tag %>
+  <%= export_csv_separator_select_tag %>
   <p class="buttons">
     <%= submit_tag l(:button_export), :name => nil, :onclick => 'hideModal(this);', :data => {:disable_with => false} %>
     <%= link_to_function l(:button_cancel), 'hideModal(this);' %>
@@ -72,7 +73,7 @@
         },
         scales: {
           yAxis: {stacked: true},
-          xAxis: {stacked: true}
+          xAxis: {stacked: true, ticks: {precision: 0}}
         }
       }
     });

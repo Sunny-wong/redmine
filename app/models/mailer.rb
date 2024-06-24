@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,6 +28,14 @@ class Mailer < ActionMailer::Base
   include Redmine::I18n
   include Roadie::Rails::Automatic
 
+  class DeliveryJob < ActionMailer::MailDeliveryJob
+    include Redmine::JobWrapper
+
+    around_enqueue :keep_current_user
+  end
+
+  self.delivery_job = DeliveryJob
+
   # Overrides ActionMailer::Base#process in order to set the recipient as the current user
   # and his language as the default locale.
   # The first argument of all actions of this Mailer must be a User (the recipient),
@@ -45,7 +53,7 @@ class Mailer < ActionMailer::Base
       lang ||= Setting.default_language
       set_language_if_valid(lang)
 
-      super(action, *args)
+      super
     ensure
       User.current = initial_user
       ::I18n.locale = initial_language
@@ -76,6 +84,7 @@ class Mailer < ActionMailer::Base
                     'Issue-Id' => issue.id,
                     'Issue-Author' => issue.author.login,
                     'Issue-Assignee' => assignee_for_header(issue)
+    redmine_headers 'Issue-Priority' => issue.priority.name if issue.priority
     message_id issue
     references issue
     @author = issue.author
@@ -108,6 +117,7 @@ class Mailer < ActionMailer::Base
                     'Issue-Id' => issue.id,
                     'Issue-Author' => issue.author.login,
                     'Issue-Assignee' => assignee_for_header(issue)
+    redmine_headers 'Issue-Priority' => issue.priority.name if issue.priority
     message_id journal
     references issue
     @author = journal.user
@@ -610,7 +620,7 @@ class Mailer < ActionMailer::Base
     scope = scope.where(:tracker_id => tracker.id) if tracker
     issues_by_assignee = scope.includes(:status, :assigned_to, :project, :tracker).
                               group_by(&:assigned_to)
-    issues_by_assignee.keys.each do |assignee|
+    issues_by_assignee.keys.each do |assignee|  # rubocop:disable Style/HashEachMethods
       if assignee.is_a?(Group)
         assignee.users.each do |user|
           issues_by_assignee[user] ||= []
@@ -703,10 +713,10 @@ class Mailer < ActionMailer::Base
       headers[:references] = @references_objects.collect {|o| "<#{self.class.references_for(o, @user)}>"}.join(' ')
     end
 
-    if block_given?
-      super headers, &block
+    if block
+      super
     else
-      super headers do |format|
+      super(headers) do |format|
         format.text
         format.html unless Setting.plain_text_mail?
       end

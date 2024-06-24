@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../test_helper', __FILE__)
+require_relative '../../../test_helper'
 
 class Redmine::PluginTest < ActiveSupport::TestCase
   def setup
@@ -60,6 +60,14 @@ class Redmine::PluginTest < ActiveSupport::TestCase
     assert_equal 'This is a test plugin', plugin.description
     assert_equal '0.0.1', plugin.version
     assert_equal File.join(@klass.directory, 'foo_plugin', 'assets'), plugin.assets_directory
+  end
+
+  ::FooModel = Class.new(ApplicationRecord)
+  def test_register_attachment_object_type
+    Redmine::Acts::Attachable::ObjectTypeConstraint.expects(:register_object_type).with("foo_models")
+    @klass.register :foo_plugin do
+      attachment_object_type FooModel
+    end
   end
 
   def test_register_should_raise_error_if_plugin_directory_does_not_exist

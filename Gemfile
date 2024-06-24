@@ -1,26 +1,27 @@
 source 'https://rubygems.org'
 
-ruby '>= 2.6.0', '< 3.2.0'
-gem 'bundler', '>= 1.12.0'
+ruby '>= 3.0.0', '< 3.4.0'
 
-gem 'rails', '6.1.7'
-gem 'rouge', '~> 3.30.0'
-gem 'request_store', '~> 1.5.0'
+gem 'rails', '7.1.2'
+gem 'rouge', '~> 4.2'
 gem 'mini_mime', '~> 1.1.0'
 gem "actionpack-xml_parser"
-gem 'roadie-rails', '~> 3.0.0'
+gem 'roadie-rails', '~> 3.2.0'
 gem 'marcel'
-gem "mail", "~> 2.7.1"
-gem 'csv', '~> 3.2.0'
-gem 'nokogiri', '~> 1.13.6'
-gem "rexml", require: false if Gem.ruby_version >= Gem::Version.new('3.0')
-gem 'i18n', '~> 1.12.0'
-gem "rbpdf", "~> 1.20.0"
+gem 'mail', '~> 2.8.1'
+gem 'nokogiri', '~> 1.16.0'
+gem 'i18n', '~> 1.14.1'
+gem 'rbpdf', '~> 1.21.3'
 gem 'addressable'
 gem 'rubyzip', '~> 2.3.0'
-gem 'net-smtp', '~> 0.3.0'
-gem 'net-imap', '~> 0.2.2'
-gem 'net-pop', '~> 0.1.1'
+gem 'propshaft', '~> 0.8.0'
+gem 'rack', '>= 3.1.3'
+
+#  Ruby Standard Gems
+gem 'csv', '~> 3.2.8'
+gem 'net-imap', '~> 0.4.8'
+gem 'net-pop', '~> 0.1.2'
+gem 'net-smtp', '~> 0.4.0'
 
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :x64_mingw, :mswin]
@@ -40,17 +41,17 @@ end
 
 # Optional gem for exporting the gantt to a PNG file
 group :minimagick do
-  gem 'mini_magick', '~> 4.11.0'
+  gem 'mini_magick', '~> 4.13.0'
 end
 
 # Optional Markdown support
 group :markdown do
-  gem 'redcarpet', '~> 3.5.1'
+  gem 'redcarpet', '~> 3.6.0'
 end
 
 # Optional CommonMark support, not for JRuby
 group :common_mark do
-  gem "commonmarker", '0.23.4'
+  gem "commonmarker", '~> 0.23.8'
   gem 'deckar01-task_list', '2.3.2'
 end
 
@@ -62,19 +63,20 @@ database_file = File.join(File.dirname(__FILE__), "config/database.yml")
 if File.exist?(database_file)
   yaml_config = ERB.new(IO.read(database_file)).result
   database_config = YAML.respond_to?(:unsafe_load) ? YAML.unsafe_load(yaml_config) : YAML.load(yaml_config)
-  adapters = database_config.values.map {|c| c['adapter']}.compact.uniq
+  adapters = database_config.values.filter_map {|c| c['adapter']}.uniq
   if adapters.any?
     adapters.each do |adapter|
       case adapter
       when 'mysql2'
-        gem "mysql2", "~> 0.5.0", :platforms => [:mri, :mingw, :x64_mingw]
+        gem 'mysql2', '~> 0.5.0'
+        gem "with_advisory_lock"
       when /postgresql/
-        gem "pg", "~> 1.4.2", :platforms => [:mri, :mingw, :x64_mingw]
+        gem 'pg', '~> 1.5.3'
       when /sqlite3/
-        gem 'sqlite3', '~> 1.5.0', :platforms => [:mri, :mingw, :x64_mingw]
+        gem 'sqlite3', '~> 1.7.0'
       when /sqlserver/
-        gem "tiny_tds", "~> 2.1.2", :platforms => [:mri, :mingw, :x64_mingw]
-        gem "activerecord-sqlserver-adapter", "~> 6.1.0", :platforms => [:mri, :mingw, :x64_mingw]
+        gem 'tiny_tds', '~> 2.1.2'
+        gem 'activerecord-sqlserver-adapter', '~> 7.1.2'
       else
         warn("Unknown database adapter `#{adapter}` found in config/database.yml, use Gemfile.local to load your own database gems")
       end
@@ -86,26 +88,28 @@ else
   warn("Please configure your config/database.yml first")
 end
 
+group :development, :test do
+  gem 'debug'
+end
+
 group :development do
   gem 'listen', '~> 3.3'
-  gem "yard"
+  gem 'yard', require: false
 end
 
 group :test do
   gem "rails-dom-testing"
-  gem 'mocha', (Gem.ruby_version < Gem::Version.new('2.7.0') ? ['>= 1.4.0', '< 2.0.0'] : '>= 1.4.0')
-  gem 'simplecov', '~> 0.21.2', :require => false
+  gem 'mocha', '>= 2.0.1'
+  gem 'simplecov', '~> 0.22.0', :require => false
   gem "ffi", platforms: [:mingw, :x64_mingw, :mswin]
   # For running system tests
-  # TODO: Remove version specification once Capybara supports Puma 6
-  gem 'puma', '< 6.0.0'
-  gem 'capybara', '~> 3.36.0'
-  gem "selenium-webdriver", "~> 3.142.7"
-  gem 'webdrivers', '4.6.1', require: false
+  gem 'puma'
+  gem "capybara", ">= 3.39"
+  gem 'selenium-webdriver', '>= 4.11.0'
   # RuboCop
-  gem 'rubocop', '~> 1.38.0'
-  gem 'rubocop-performance', '~> 1.15.0'
-  gem 'rubocop-rails', '~> 2.17.2'
+  gem 'rubocop', '~> 1.64.0', require: false
+  gem 'rubocop-performance', '~> 1.21.0', require: false
+  gem 'rubocop-rails', '~> 2.25.0', require: false
 end
 
 local_gemfile = File.join(File.dirname(__FILE__), "Gemfile.local")

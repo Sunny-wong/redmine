@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -18,6 +18,7 @@
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
 module VersionsHelper
+  include Redmine::Export::Text::VersionsTextHelper
 
   def version_anchor(version)
     if @project == version.project
@@ -80,7 +81,7 @@ module VersionsHelper
   end
 
   def status_by_options_for_select(value)
-    options_for_select(STATUS_BY_CRITERIAS.collect {|criteria| [l("field_#{criteria}".to_sym), criteria]}, value)
+    options_for_select(STATUS_BY_CRITERIAS.collect {|criteria| [l(:"field_#{criteria}"), criteria]}, value)
   end
 
   def link_to_new_issue(version, project)

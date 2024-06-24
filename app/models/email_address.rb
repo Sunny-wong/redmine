@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,10 +17,8 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class EmailAddress < ActiveRecord::Base
+class EmailAddress < ApplicationRecord
   include Redmine::SafeAttributes
-
-  EMAIL_REGEXP = /\A([^@\s]+)@((?:[-a-z0-9]+\.)+(?:(?:xn--[-a-z0-9]+)|(?:[a-z]{2,})))\z/i
 
   belongs_to :user
 
@@ -32,7 +30,7 @@ class EmailAddress < ActiveRecord::Base
   after_destroy_commit :deliver_security_notification_destroy
 
   validates_presence_of :address
-  validates_format_of :address, :with => EMAIL_REGEXP, :allow_blank => true
+  validates_format_of :address, :with => URI::MailTo::EMAIL_REGEXP, :allow_blank => true
   validates_length_of :address, :maximum => User::MAIL_LENGTH_LIMIT, :allow_nil => true
   validates_uniqueness_of :address, :case_sensitive => false,
     :if => Proc.new {|email| email.address_changed? && email.address.present?}
@@ -41,7 +39,17 @@ class EmailAddress < ActiveRecord::Base
   safe_attributes 'address'
 
   def address=(arg)
-    write_attribute(:address, arg.to_s.strip)
+    normalized_address = arg.to_s.strip
+
+    # Convert internationalized domain name (IDN) to Punycode
+    # e.g. 'marie@société.example' => 'marie@xn--socit-esab.example'
+    local_part, _at, domain = normalized_address.partition('@')
+    if domain.present?
+      ascii_domain = Addressable::IDNA.to_ascii(domain)
+      normalized_address = "#{local_part}@#{ascii_domain}"
+    end
+
+    write_attribute(:address, normalized_address)
   end
 
   def destroy

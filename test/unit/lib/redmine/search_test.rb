@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../test_helper', __FILE__)
+require_relative '../../../test_helper'
 
 class Redmine::Search::Tokenize < ActiveSupport::TestCase
   def test_tokenize
@@ -29,5 +29,10 @@ class Redmine::Search::Tokenize < ActiveSupport::TestCase
     # U+3000 is an ideographic space ("　")
     value = "全角\u3000スペース"
     assert_equal %w[全角 スペース], Redmine::Search::Tokenizer.new(value).tokens
+  end
+
+  def test_tokenize_should_support_multiple_phrases
+    value = '"phrase one" "phrase two"'
+    assert_equal ["phrase one", "phrase two"], Redmine::Search::Tokenizer.new(value).tokens
   end
 end

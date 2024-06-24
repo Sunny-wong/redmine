@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,6 +28,6 @@ class ProjectCustomField < CustomField
 
   def visibility_by_project_condition(project_key=nil, user=User.current, id_column=nil)
     project_key ||= "#{Project.table_name}.id"
-    super(project_key, user, id_column)
+    super
   end
 end

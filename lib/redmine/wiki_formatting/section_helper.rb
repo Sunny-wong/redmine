@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -22,13 +22,13 @@ module Redmine
     module SectionHelper
       def get_section(index)
         section = extract_sections(index)[1]
-        hash = Digest::MD5.hexdigest(section)
+        hash = ActiveSupport::Digest.hexdigest(section)
         return section, hash
       end
 
       def update_section(index, update, hash=nil)
         t = extract_sections(index)
-        if hash.present? && hash != Digest::MD5.hexdigest(t[1])
+        if hash.present? && hash != ActiveSupport::Digest.hexdigest(t[1])
           raise Redmine::WikiFormatting::StaleSectionError
         end
 

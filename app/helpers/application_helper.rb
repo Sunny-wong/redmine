@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -60,7 +60,7 @@ module ApplicationHelper
     case principal
     when User
       name = h(principal.name(options[:format]))
-      name = "@" + name if options[:mention]
+      name = "@".html_safe + name if options[:mention]
       css_classes = ''
       if principal.active? || (User.current.admin? && principal.logged?)
         url = user_url(principal, :only_path => only_path)
@@ -252,34 +252,34 @@ module ApplicationHelper
 
   # Helper that formats object for html or text rendering
   def format_object(object, html=true, &block)
-    if block_given?
+    if block
       object = yield object
     end
-    case object.class.name
-    when 'Array'
+    case object
+    when Array
       formatted_objects = object.map {|o| format_object(o, html)}
       html ? safe_join(formatted_objects, ', ') : formatted_objects.join(', ')
-    when 'Time'
+    when Time, ActiveSupport::TimeWithZone
       format_time(object)
-    when 'Date'
+    when Date
       format_date(object)
-    when 'Fixnum'
+    when Integer
       object.to_s
-    when 'Float'
-      sprintf "%.2f", object
-    when 'User', 'Group'
+    when Float
+      number_with_delimiter(sprintf('%.2f', object), delimiter: nil)
+    when User, Group
       html ? link_to_principal(object) : object.to_s
-    when 'Project'
+    when Project
       html ? link_to_project(object) : object.to_s
-    when 'Version'
+    when Version
       html ? link_to_version(object) : object.to_s
-    when 'TrueClass'
+    when TrueClass
       l(:general_text_Yes)
-    when 'FalseClass'
+    when FalseClass
       l(:general_text_No)
-    when 'Issue'
+    when Issue
       object.visible? && html ? link_to_issue(object) : "##{object.id}"
-    when 'Attachment'
+    when Attachment
       if html
         content_tag(
           :span,
@@ -294,7 +294,7 @@ module ApplicationHelper
       else
         object.filename
       end
-    when 'CustomValue', 'CustomFieldValue'
+    when CustomValue, CustomFieldValue
       return "" unless object.customized&.visible?
 
       if object.custom_field
@@ -440,7 +440,7 @@ module ApplicationHelper
         classes = (ancestors.empty? ? 'root' : 'child')
         classes += ' archived' if project.archived?
         s << "<li class='#{classes}'><div class='#{classes}'>"
-        s << h(block_given? ? capture(project, &block) : project.name)
+        s << h(block ? capture(project, &block) : project.name)
         s << "</div>\n"
         ancestors << project
       end
@@ -634,7 +634,7 @@ module ApplicationHelper
                  'span', nil,
                  :class => "name icon icon-#{principal.class.name.downcase}"
                )
-            ) + principal
+            ) + principal.to_s
         )
     end
     s.html_safe
@@ -684,7 +684,7 @@ module ApplicationHelper
 
   def html_hours(text)
     text.gsub(
-      %r{(\d+)([\.:])(\d+)},
+      %r{(\d+)([\.,:])(\d+)},
       '<span class="hours hours-int">\1</span><span class="hours hours-dec">\2\3</span>'
     ).html_safe
   end
@@ -694,6 +694,8 @@ module ApplicationHelper
   end
 
   def time_tag(time)
+    return if time.nil?
+
     text = distance_of_time_in_words(Time.now, time)
     if @project
       link_to(text,
@@ -876,9 +878,9 @@ module ApplicationHelper
     @current_section = 0 if options[:edit_section_links]
 
     parse_sections(text, project, obj, attr, only_path, options)
-    text = parse_non_pre_blocks(text, obj, macros, options) do |text|
+    text = parse_non_pre_blocks(text, obj, macros, options) do |txt|
       [:parse_inline_attachments, :parse_hires_images, :parse_wiki_links, :parse_redmine_links].each do |method_name|
-        send method_name, text, project, obj, attr, only_path, options
+        send method_name, txt, project, obj, attr, only_path, options
       end
     end
     parse_headings(text, project, obj, attr, only_path, options)
@@ -942,16 +944,27 @@ module ApplicationHelper
       attachments += obj.attachments if obj.respond_to?(:attachments)
     end
     if attachments.present?
-      text.gsub!(/src="([^\/"]+\.(bmp|gif|jpg|jpe|jpeg|png))"(\s+alt="([^"]*)")?/i) do |m|
-        filename, ext, alt, alttext = $1, $2, $3, $4
+      title_and_alt_re = /\s+(title|alt)="([^"]*)"/i
+
+      text.gsub!(/src="([^\/"]+\.(bmp|gif|jpg|jpe|jpeg|png|webp))"([^>]*)/i) do |m|
+        filename, ext, other_attrs = $1, $2, $3
+
         # search for the picture in attachments
         if found = Attachment.latest_attach(attachments, CGI.unescape(filename))
           image_url = download_named_attachment_url(found, found.filename, :only_path => only_path)
           desc = found.description.to_s.delete('"')
-          if !desc.blank? && alttext.blank?
-            alt = " title=\"#{desc}\" alt=\"#{desc}\""
-          end
-          "src=\"#{image_url}\"#{alt} loading=\"lazy\""
+
+          # remove title and alt attributes after extracting them
+          title_and_alt = other_attrs.scan(title_and_alt_re).to_h
+          other_attrs.gsub!(title_and_alt_re, '')
+
+          title_and_alt_attrs = if !desc.blank? && title_and_alt['alt'].blank?
+                                  " title=\"#{desc}\" alt=\"#{desc}\""
+                                else
+                                  # restore original title and alt attributes
+                                  " #{title_and_alt.map { |k, v| %[#{k}="#{v}"] }.join(' ')}"
+                                end
+          "src=\"#{image_url}\"#{title_and_alt_attrs} loading=\"lazy\"#{other_attrs}"
         else
           m
         end
@@ -1472,7 +1485,7 @@ module ApplicationHelper
   end
 
   def lang_options_for_select(blank=true)
-    (blank ? [["(auto)", ""]] : []) + languages_options
+    (blank ? [["(#{l('label_option_auto_lang')})", ""]] : []) + languages_options
   end
 
   def labelled_form_for(*args, &proc)
@@ -1501,7 +1514,7 @@ module ApplicationHelper
 
   # Render the error messages for the given objects
   def error_messages_for(*objects)
-    objects = objects.map {|o| o.is_a?(String) ? instance_variable_get("@#{o}") : o}.compact
+    objects = objects.filter_map {|o| o.is_a?(String) ? instance_variable_get(:"@#{o}") : o}
     errors = objects.map {|o| o.errors.full_messages}.flatten
     render_error_messages(errors)
   end
@@ -1642,7 +1655,7 @@ module ApplicationHelper
           javascript_tag(
             "var datepickerOptions={dateFormat: 'yy-mm-dd', firstDay: #{start_of_week}, " \
               "showOn: 'button', buttonImageOnly: true, buttonImage: '" +
-            path_to_image('/images/calendar.png') +
+            asset_path('calendar.png') +
               "', showButtonPanel: true, showWeek: true, showOtherMonths: true, " \
               "selectOtherMonths: true, changeMonth: true, changeYear: true, " \
               "beforeShow: beforeShowDatePicker};"
@@ -1666,14 +1679,14 @@ module ApplicationHelper
     plugin = options.delete(:plugin)
     sources = sources.map do |source|
       if plugin
-        "/plugin_assets/#{plugin}/stylesheets/#{source}"
+        "plugin_assets/#{plugin}/#{source}"
       elsif current_theme && current_theme.stylesheets.include?(source)
         current_theme.stylesheet_path(source)
       else
         source
       end
     end
-    super *sources, options
+    super(*sources, options)
   end
 
   # Overrides Rails' image_tag with themes and plugins support.
@@ -1683,11 +1696,11 @@ module ApplicationHelper
   #
   def image_tag(source, options={})
     if plugin = options.delete(:plugin)
-      source = "/plugin_assets/#{plugin}/images/#{source}"
+      source = "plugin_assets/#{plugin}/#{source}"
     elsif current_theme && current_theme.images.include?(source)
       source = current_theme.image_path(source)
     end
-    super source, options
+    super
   end
 
   # Overrides Rails' javascript_include_tag with plugins support
@@ -1700,13 +1713,13 @@ module ApplicationHelper
     if plugin = options.delete(:plugin)
       sources = sources.map do |source|
         if plugin
-          "/plugin_assets/#{plugin}/javascripts/#{source}"
+          "plugin_assets/#{plugin}/#{source}"
         else
           source
         end
       end
     end
-    super *sources, options
+    super(*sources, options)
   end
 
   def sidebar_content?
@@ -1728,12 +1741,14 @@ module ApplicationHelper
   # Returns the javascript tags that are included in the html layout head
   def javascript_heads
     tags = javascript_include_tag(
-      'jquery-3.6.1-ui-1.13.2-ujs-6.1.7',
+      'jquery-3.7.1-ui-1.13.3',
+      'rails-ujs',
       'tribute-5.1.3.min',
       'tablesort-5.2.1.min.js',
       'tablesort-5.2.1.number.min.js',
       'application',
-      'responsive')
+      'responsive'
+    )
     unless User.current.pref.warn_on_leaving_unsaved == '0'
       warn_text = escape_javascript(l(:text_warn_on_leaving_unsaved))
       tags <<
@@ -1746,21 +1761,18 @@ module ApplicationHelper
   end
 
   def favicon
-    "<link rel='shortcut icon' href='#{favicon_path}' />".html_safe
+    favicon_link_tag(favicon_path, rel: "shortcut icon")
   end
 
   # Returns the path to the favicon
   def favicon_path
-    icon = (current_theme && current_theme.favicon?) ? current_theme.favicon_path : '/favicon.ico'
+    icon = (current_theme && current_theme.favicon?) ? current_theme.favicon_path : 'favicon.ico'
     image_path(icon)
   end
 
   # Returns the full URL to the favicon
   def favicon_url
-    # TODO: use #image_url introduced in Rails4
-    path = favicon_path
-    base = url_for(:controller => 'welcome', :action => 'index', :only_path => false)
-    base.sub(%r{/+$}, '') + '/' + path.sub(%r{^/+}, '')
+    image_url(favicon_path)
   end
 
   def robot_exclusion_tag
@@ -1803,6 +1815,23 @@ module ApplicationHelper
     end
   end
 
+  def export_csv_separator_select_tag
+    options = [[l(:label_comma_char), ','], [l(:label_semi_colon_char), ';']]
+    # Add the separator from translations if it is missing
+    general_csv_separator = l(:general_csv_separator)
+    unless options.index { |option| option.last == general_csv_separator }
+      options << Array.new(2, general_csv_separator)
+    end
+    content_tag(:p) do
+      concat(
+        content_tag(:label) do
+          concat l(:label_fields_separator) + ' '
+          concat select_tag('field_separator', options_for_select(options, general_csv_separator))
+        end
+      )
+    end
+  end
+
   # Returns an array of error messages for bulk edited items (issues, time entries)
   def bulk_edit_error_messages(items)
     messages = {}
@@ -1818,6 +1847,10 @@ module ApplicationHelper
   end
 
   def render_if_exist(options = {}, locals = {}, &block)
+    # Remove test_render_if_exist_should_be_render_partial and test_render_if_exist_should_be_render_nil
+    # along with this method in Redmine 7.0
+    ActiveSupport::Deprecation.warn 'ApplicationHelper#render_if_exist is deprecated and will be removed in Redmine 7.0.'
+
     if options[:partial]
       if lookup_context.exists?(options[:partial], lookup_context.prefixes, true)
         render(options, locals, &block)
@@ -1853,10 +1886,10 @@ module ApplicationHelper
   # Returns the markdown formatter: markdown or common_mark
   # ToDo: Remove this when markdown will be removed
   def markdown_formatter
-    if Setting.text_formatting == "common_mark"
-      "common_mark"
-    else
+    if Setting.text_formatting == "markdown"
       "markdown"
+    else
+      "common_mark"
     end
   end
 

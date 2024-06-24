@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,10 +17,12 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class Issue < ActiveRecord::Base
+class Issue < ApplicationRecord
   include Redmine::SafeAttributes
   include Redmine::Utils::DateCalculation
   include Redmine::I18n
+  before_validation :default_assign, on: :create
+  before_validation :clear_disabled_fields
   before_save :set_parent_id
   include Redmine::NestedSet::IssueNestedSet
 
@@ -107,8 +109,6 @@ class Issue < ActiveRecord::Base
     end
   end)
 
-  before_validation :default_assign, on: :create
-  before_validation :clear_disabled_fields
   before_save :close_duplicates, :update_done_ratio_from_issue_status,
               :force_updated_on_change, :update_closed_on
   after_save do |issue|
@@ -116,12 +116,17 @@ class Issue < ActiveRecord::Base
       issue.send :after_project_change
     end
   end
+  after_destroy :update_parent_attributes
   after_save :reschedule_following_issues, :update_nested_set_attributes,
              :update_parent_attributes, :delete_selected_attachments, :create_journal
   # Should be after_create but would be called before previous after_save callbacks
-  after_save :after_create_from_copy, :create_parent_issue_journal
-  after_destroy :update_parent_attributes, :create_parent_issue_journal
+  after_save :after_create_from_copy
+  # add_auto_watcher needs to run before sending notifications, thus it needs
+  # to be added after send_notification (after_ callbacks are run in inverse order)
+  # https://api.rubyonrails.org/v5.2.3/classes/ActiveSupport/Callbacks/ClassMethods.html#method-i-set_callback
   after_create_commit :send_notification
+  after_create_commit :add_auto_watcher
+  after_commit :create_parent_issue_journal
 
   # Returns a SQL conditions string used to find all issues visible by the specified user
   def self.visible_condition(user, options={})
@@ -193,6 +198,10 @@ class Issue < ActiveRecord::Base
     user_tracker_permission?(user, :edit_issues) || (
       user_tracker_permission?(user, :edit_own_issues) && author == user
     )
+  end
+
+  def attachments_addable?(user=User.current)
+    attributes_editable?(user) || notes_addable?(user)
   end
 
   # Overrides Redmine::Acts::Attachable::InstanceMethods#attachments_editable?
@@ -463,10 +472,10 @@ class Issue < ActiveRecord::Base
 
     %w(project project_id tracker tracker_id).each do |attr|
       if attrs.has_key?(attr)
-        send "#{attr}=", attrs.delete(attr)
+        send :"#{attr}=", attrs.delete(attr)
       end
     end
-    super attrs, *args
+    super(attrs, *args)
   end
 
   def attributes=(new_attributes)
@@ -1156,8 +1165,16 @@ class Issue < ActiveRecord::Base
     end
   end
 
+  # Returns the number of estimated remaining hours on this issue
+  def estimated_remaining_hours
+    (estimated_hours || 0) * (100 - (done_ratio || 0)) / 100
+  end
+
   def relations
-    @relations ||= IssueRelation::Relations.new(self, (relations_from + relations_to).sort)
+    @relations ||= IssueRelation::Relations.new(
+      self,
+      IssueRelation.where('issue_from_id = ? OR issue_to_id = ?', id, id).sort
+    )
   end
 
   def last_updated_by
@@ -1427,9 +1444,9 @@ class Issue < ActiveRecord::Base
   end
 
   def <=>(issue)
-    if issue.nil?
-      -1
-    elsif root_id != issue.root_id
+    return nil unless issue.is_a?(Issue)
+
+    if root_id != issue.root_id
       (root_id || 0) <=> (issue.root_id || 0)
     else
       (lft || 0) <=> (issue.lft || 0)
@@ -1497,6 +1514,8 @@ class Issue < ActiveRecord::Base
       parent_id
     end
   end
+
+  alias :parent_issue :parent
 
   def set_parent_id
     self.parent_id = parent_issue_id
@@ -1881,9 +1900,18 @@ class Issue < ActiveRecord::Base
         next if issue.project.nil? || issue.fixed_version.nil?
 
         unless issue.project.shared_versions.include?(issue.fixed_version)
-          issue.init_journal(User.current)
-          issue.fixed_version = nil
-          issue.save
+          retried = false
+          begin
+            issue.init_journal(User.current)
+            issue.fixed_version = nil
+            issue.save
+          rescue ActiveRecord::StaleObjectError
+            raise if retried
+
+            retried = true
+            issue.reload
+            retry
+          end
         end
       end
     end
@@ -2008,15 +2036,33 @@ class Issue < ActiveRecord::Base
         [nil, parent_id]
       end
 
-    if old_parent_id.present? && old_parent_issue = Issue.visible.find_by_id(old_parent_id)
-      old_parent_issue.init_journal(User.current)
-      old_parent_issue.current_journal.__send__(:add_attribute_detail, 'child_id', child_id, nil)
-      old_parent_issue.save
+    if old_parent_id.present?
+      Issue.transaction do
+        if old_parent_issue = Issue.visible.lock.find_by_id(old_parent_id)
+          old_parent_issue.init_journal(User.current)
+          old_parent_issue.current_journal.__send__(:add_attribute_detail, 'child_id', child_id, nil)
+          old_parent_issue.save
+        end
+      end
     end
-    if new_parent_id.present? && new_parent_issue = Issue.visible.find_by_id(new_parent_id)
-      new_parent_issue.init_journal(User.current)
-      new_parent_issue.current_journal.__send__(:add_attribute_detail, 'child_id', nil, child_id)
-      new_parent_issue.save
+
+    if new_parent_id.present?
+      Issue.transaction do
+        if new_parent_issue = Issue.visible.lock.find_by_id(new_parent_id)
+          new_parent_issue.init_journal(User.current)
+          new_parent_issue.current_journal.__send__(:add_attribute_detail, 'child_id', nil, child_id)
+          new_parent_issue.save
+        end
+      end
+    end
+  end
+
+  def add_auto_watcher
+    if author&.active? &&
+        author&.allowed_to?(:add_issue_watchers, project) &&
+        author.pref.auto_watch_on?('issue_created') &&
+        self.watcher_user_ids.exclude?(author.id)
+      self.set_watcher(author, true)
     end
   end
 
@@ -2029,8 +2075,9 @@ class Issue < ActiveRecord::Base
   def clear_disabled_fields
     if tracker
       tracker.disabled_core_fields.each do |attribute|
-        send "#{attribute}=", nil
+        send :"#{attribute}=", nil
       end
+      self.priority_id ||= IssuePriority.default&.id || IssuePriority.active.first.id
       self.done_ratio ||= 0
     end
   end

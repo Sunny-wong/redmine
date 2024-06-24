@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,7 +27,8 @@ module Redmine
       'avatar_server_url' => 'https://www.gravatar.com',
       'email_delivery' => nil,
       'max_concurrent_ajax_uploads' => 2,
-      'common_mark_enable_hardbreaks' => true
+      'common_mark_enable_hardbreaks' => true,
+      'thumbnails_generation_timeout' => 10
     }
 
     @config = nil
@@ -66,7 +67,7 @@ module Redmine
                 "Please update your config/configuration.yml to use :#$1 delivery method instead."
             end
             v.symbolize_keys! if v.respond_to?(:symbolize_keys!)
-            ActionMailer::Base.send("#{k}=", v)
+            ActionMailer::Base.send(:"#{k}=", v)
           end
         end
 

@@ -145,6 +145,7 @@ es:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
         # Append your own errors here or at the model/attributes scope.
 
@@ -496,7 +497,6 @@ es:
   label_jump_to_a_project: Ir al proyecto...
   label_language_based: Basado en el idioma
   label_last_changes: "últimos %{count} cambios"
-  label_last_login: Última conexión
   label_last_month: último mes
   label_last_n_days: "últimos %{count} días"
   label_last_week: última semana
@@ -605,10 +605,6 @@ es:
   label_settings: Configuración
   label_show_completed_versions: Muestra las versiones terminadas
   label_sort_by: "Ordenar por %{value}"
-  label_sort_higher: Subir
-  label_sort_highest: Primero
-  label_sort_lower: Bajar
-  label_sort_lowest: Último
   label_spent_time: Tiempo dedicado
   label_statistics: Estadísticas
   label_stay_logged_in: Mantener la sesión abierta
@@ -667,7 +663,6 @@ es:
   notice_account_password_updated: Contraseña modificada correctamente.
   notice_account_pending: "Su cuenta ha sido creada y está pendiende de la aprobación por parte del administrador."
   notice_account_register_done: Cuenta creada correctamente. Para activarla, haga clic sobre el enlace que le ha sido enviado por correo.
-  notice_account_unknown_email: Usuario desconocido.
   notice_account_updated: Cuenta actualizada correctamente.
   notice_account_wrong_password: Contraseña incorrecta.
   notice_can_t_change_password: Esta cuenta utiliza una fuente de autenticación externa. No es posible cambiar la contraseña.
@@ -912,7 +907,7 @@ es:
     Está a punto de eliminar algún o todos sus permisos y podría perder la posibilidad de modificar este proyecto tras hacerlo.
     ¿Está seguro de querer continuar?
   label_close_versions: Cerrar versiones completadas
-  label_board_sticky: Pegajoso
+  label_board_sticky: Fijado
   label_board_locked: Bloqueado
   permission_export_wiki_pages: Exportar páginas wiki
   setting_cache_formatted_text: Cachear texto formateado
@@ -1297,7 +1292,7 @@ es:
   label_trackers_description: Descripción del tipo de petición
   label_open_trackers_description: Ver todas las descripciones de los tipos de petición
   label_preferred_body_part_text: Texto
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
 
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
@@ -1311,7 +1306,6 @@ es:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1348,7 +1342,6 @@ es:
   text_gs_available: Disponible soporte ImageMagick PDF (opcional)
   field_recently_used_projects: Número de proyectos recientemente usados en el selector
   label_optgroup_bookmarks: Marcadores
-  label_optgroup_others: Otros proyectos
   label_optgroup_recents: Utilizados recientemente
   button_project_bookmark: Añadir marcador
   button_project_bookmark_delete: Quitar marcador
@@ -1545,3 +1538,23 @@ es:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval

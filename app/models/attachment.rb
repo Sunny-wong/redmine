@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -21,7 +21,7 @@ require "digest"
 require "fileutils"
 require "zip"
 
-class Attachment < ActiveRecord::Base
+class Attachment < ApplicationRecord
   include Redmine::SafeAttributes
   belongs_to :container, :polymorphic => true
   belongs_to :author, :class_name => "User"
@@ -84,9 +84,9 @@ class Attachment < ActiveRecord::Base
   @@thumbnails_storage_path = File.join(Rails.root, "tmp", "thumbnails")
 
   before_create :files_to_final_location
-  after_rollback :delete_from_disk, :on => :create
   after_commit :delete_from_disk, :on => :destroy
   after_commit :reuse_existing_file_if_possible, :on => :create
+  after_rollback :delete_from_disk, :on => :create
 
   safe_attributes 'filename', 'content_type', 'description'
 
@@ -135,7 +135,7 @@ class Attachment < ActiveRecord::Base
   end
 
   # Copies the temporary file to its final location
-  # and computes its MD5 hash
+  # and computes its hash
   def files_to_final_location
     if @temp_file
       self.disk_directory = target_directory
@@ -220,7 +220,7 @@ class Attachment < ActiveRecord::Base
   end
 
   def image?
-    !!(self.filename =~ /\.(bmp|gif|jpg|jpe|jpeg|png)$/i)
+    !!(self.filename =~ /\.(bmp|gif|jpg|jpe|jpeg|png|webp)$/i)
   end
 
   def thumbnailable?
@@ -345,14 +345,14 @@ class Attachment < ActiveRecord::Base
   #   })
   #
   def self.update_attachments(attachments, params)
-    params = params.transform_keys {|key| key.to_i}
-
+    converted = {}
+    params.each {|key, val| converted[key.to_i] = val}
     saved = true
     transaction do
       attachments.each do |attachment|
-        if p = params[attachment.id]
-          attachment.filename = p[:filename] if p.key?(:filename)
-          attachment.description = p[:description] if p.key?(:description)
+        if file = converted[attachment.id]
+          attachment.filename = file[:filename] if file.key?(:filename)
+          attachment.description = file[:description] if file.key?(:description)
           saved &&= attachment.save
         end
       end
@@ -559,7 +559,7 @@ class Attachment < ActiveRecord::Base
       if %r{^[a-zA-Z0-9_\.\-]*$}.match?(filename) && filename.length <= 50
         ascii = filename
       else
-        ascii = Digest::MD5.hexdigest(filename)
+        ascii = ActiveSupport::Digest.hexdigest(filename)
         # keep the extension if any
         ascii << $1 if filename =~ %r{(\.[a-zA-Z0-9]+)$}
       end

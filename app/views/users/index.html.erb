@@ -8,6 +8,7 @@
 </div>
 
 <h2><%= @query.new_record? ? l(:label_user_plural) : @query.name %></h2>
+<%= @query.persisted? && @query.description.present? ? content_tag('p', @query.description, class: 'subtitle') : '' %>
 
 <%= form_tag(users_path, method: :get, id: 'query_form') do %>
   <%= render partial: 'queries/query_form' %>
@@ -45,6 +46,7 @@
       </fieldset>
     <% end %>
     <%= export_csv_encoding_select_tag %>
+    <%= export_csv_separator_select_tag %>
     <p class="buttons">
       <%= submit_tag l(:button_export), :name => nil, :onclick => "hideModal(this);", :data => { :disable_with => false } %>
       <%= link_to_function l(:button_cancel), "hideModal(this);" %>

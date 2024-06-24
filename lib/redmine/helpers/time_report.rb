@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -49,7 +49,7 @@ module Redmine
           @scope.includes(:activity).
               reorder(nil).
               group(@criteria.collect{|criteria| @available_criteria[criteria][:sql]} + time_columns).
-              joins(@criteria.collect{|criteria| @available_criteria[criteria][:joins]}.compact).
+              joins(@criteria.filter_map{|criteria| @available_criteria[criteria][:joins]}).
               sum(:hours).each do |hash, hours|
             h = {'hours' => hours}
             (@criteria + time_columns).each_with_index do |name, i|

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -36,7 +36,8 @@ class ProjectQuery < Query
     QueryColumn.new(:identifier, :sortable => "#{Project.table_name}.identifier"),
     QueryColumn.new(:parent_id, :sortable => "#{Project.table_name}.lft ASC", :default_order => 'desc', :caption => :field_parent),
     QueryColumn.new(:is_public, :sortable => "#{Project.table_name}.is_public", :groupable => true),
-    QueryColumn.new(:created_on, :sortable => "#{Project.table_name}.created_on", :default_order => 'desc')
+    QueryColumn.new(:created_on, :sortable => "#{Project.table_name}.created_on", :default_order => 'desc'),
+    QueryColumn.new(:last_activity_date)
   ]
 
   def self.default(project: nil, user: User.current)
@@ -52,7 +53,7 @@ class ProjectQuery < Query
   end
 
   def initialize(attributes=nil, *args)
-    super attributes
+    super(attributes)
     self.filters ||= {'status' => {:operator => "=", :values => ['1']}}
   end
 
@@ -140,6 +141,13 @@ class ProjectQuery < Query
     end
   end
 
+  # Returns the project count
+  def result_count
+    base_scope.count
+  rescue ::ActiveRecord::StatementInvalid => e
+    raise StatementInvalid, e.message
+  end
+
   def results_scope(options={})
     order_option = [group_by_sort_order, (options[:order] || sort_clause)].flatten.reject(&:blank?)
 
@@ -156,6 +164,11 @@ class ProjectQuery < Query
       scope = scope.preload(:parent)
     end
 
-    scope
+    projects = scope.to_a
+    if has_column?(:last_activity_date)
+      Project.load_last_activity_date(scope)
+    end
+
+    projects
   end
 end

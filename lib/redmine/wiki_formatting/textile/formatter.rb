@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -16,8 +16,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
-
-require 'digest/md5'
 
 module Redmine
   module WikiFormatting
@@ -57,7 +55,7 @@ module Redmine
           l = 1
           started = false
           ended = false
-          text.scan(/(((?:.*?)(\A|\r?\n\s*\r?\n))(h(\d+)(#{A}#{C})\.(?::(\S+))?[ \t](.*?)$)|.*)/m).each do |all, content, lf, heading, level|
+          text.scan(/(((?:.*?)(\A|\r?\n\s*\r?\n))(h(\d+)(#{A}#{C})\.(?::(\S+))?[ \t](.*?)$)|.*)/mo).each do |all, content, lf, heading, level|
             if heading.nil?
               if ended
                 after << all
@@ -109,13 +107,13 @@ module Redmine
             text.gsub!(/<redpre#(\d+)>/) do
               content = @pre_list[$1.to_i]
               # This regex must match any data produced by RedCloth3#rip_offtags
-              if content.match(/<code\s+class=(?:"([^"]+)"|'([^']+)')>\s?(.*)/m)
+              if content =~ /<code\s+class=(?:"([^"]+)"|'([^']+)')>\s?(.*)/m
                 language = $1 || $2
                 text = $3
                 # original language for extension development
                 langattr = " data-language=\"#{CGI.escapeHTML language}\"" if language.present?
                 if Redmine::SyntaxHighlighting.language_supported?(language)
-                  text.gsub!(/x%x%/, '&')
+                  text.gsub!("x%x%", '&')
                   content = "<code class=\"#{CGI.escapeHTML language} syntaxhl\"#{langattr}>" +
                     Redmine::SyntaxHighlighting.highlight_by_language(text, language)
                 else

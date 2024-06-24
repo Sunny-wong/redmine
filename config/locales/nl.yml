@@ -135,6 +135,7 @@ nl:
         must_contain_digits: "must contain digits (0-9)"
         must_contain_special_chars: "must contain special characters (!, $, %, ...)"
         domain_not_allowed: "contains a domain not allowed (%{domain})"
+        too_simple: "is too simple"
 
   actionview_instancetag_blank_option: Selecteren
 
@@ -440,7 +441,6 @@ nl:
   label_jump_to_a_project: Ga naar een project...
   label_language_based: Taal gebaseerd
   label_last_changes: "laatste %{count} wijzigingen"
-  label_last_login: Laatste bezoek
   label_last_month: laatste maand
   label_last_n_days: "%{count} dagen geleden"
   label_last_week: vorige week
@@ -549,10 +549,6 @@ nl:
   label_settings: Instellingen
   label_show_completed_versions: Afgeronde versies weergeven
   label_sort_by: "Sorteer op %{value}"
-  label_sort_higher: Verplaats naar boven
-  label_sort_highest: Verplaats naar begin
-  label_sort_lower: Verplaats naar beneden
-  label_sort_lowest: Verplaats naar einde
   label_spent_time: Gespendeerde tijd
   label_statistics: Statistieken
   label_stay_logged_in: Ingelogd blijven
@@ -610,7 +606,6 @@ nl:
   notice_account_lost_email_sent: Er is een e-mail naar u verzonden met instructies over de keuze van een nieuw wachtwoord.
   notice_account_password_updated: Wachtwoord is met succes gewijzigd
   notice_account_pending: Uw account is aangemaakt, maar wacht nog op goedkeuring van een beheerder.
-  notice_account_unknown_email: Onbekende gebruiker.
   notice_account_updated: Account is succesvol gewijzigd
   notice_account_wrong_password: Ongeldig wachtwoord
   notice_can_t_change_password: Deze account gebruikt een externe authenticatiebron. Het is niet mogelijk om het wachtwoord te veranderen.
@@ -1243,7 +1238,7 @@ nl:
   label_trackers_description: Trackers description
   label_open_trackers_description: View all trackers description
   label_preferred_body_part_text: Text
-  label_preferred_body_part_html: HTML (experimental)
+  label_preferred_body_part_html: HTML
   field_parent_issue_subject: Parent task subject
   permission_edit_own_issues: Edit own issues
   text_select_apply_tracker: Select tracker
@@ -1256,7 +1251,6 @@ nl:
   text_gs_available: ImageMagick PDF support available (optional)
   field_recently_used_projects: Number of recently used projects in jump box
   label_optgroup_bookmarks: Bookmarks
-  label_optgroup_others: Other projects
   label_optgroup_recents: Recently used
   button_project_bookmark: Add bookmark
   button_project_bookmark_delete: Remove bookmark
@@ -1453,3 +1447,23 @@ nl:
     all references to them. This cannot be undone. Often, locking users instead of deleting
     them is the better solution.
   text_users_bulk_destroy_confirm: To confirm, please enter "%{yes}" below.
+  permission_select_project_publicity: Set project public or private
+  label_auto_watch_on_issue_created: Issues I created
+  field_any_searchable: Any searchable text
+  label_contains_any_of: contains any of
+  button_apply_issues_filter: Apply issues filter
+  label_view_previous_annotation: View annotation prior to this change
+  label_has_been: has been
+  label_has_never_been: has never been
+  label_changed_from: changed from
+  label_issue_statuses_description: Issue statuses description
+  label_open_issue_statuses_description: View all issue statuses description
+  text_select_apply_issue_status: Select issue status
+  field_name_or_email_or_login: Name, email or login
+  text_default_active_job_queue_changed: Default queue adapter which is well suited
+    only for dev/test changed
+  label_option_auto_lang: auto
+  label_issue_attachment_added: Attachment added
+  field_estimated_remaining_hours: Estimated remaining time
+  field_last_activity_date: Last activity
+  setting_issue_done_ratio_interval: Done ratio options interval
