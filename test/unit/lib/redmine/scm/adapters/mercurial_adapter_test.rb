@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../../../../test_helper', __FILE__)
+require_relative '../../../../../test_helper'
 
 class MercurialAdapterTest < ActiveSupport::TestCase
   HELPERS_DIR        = Redmine::Scm::Adapters::MercurialAdapter::HELPERS_DIR
@@ -30,12 +30,6 @@ class MercurialAdapterTest < ActiveSupport::TestCase
 
   if File.directory?(REPOSITORY_PATH)
     def setup
-      adapter_class = Redmine::Scm::Adapters::MercurialAdapter
-      assert adapter_class
-      assert adapter_class.client_command
-      assert_equal true, adapter_class.client_available
-      assert_equal true, adapter_class.client_version_above?([0, 9, 5])
-
       @adapter =
         Redmine::Scm::Adapters::MercurialAdapter.new(
           REPOSITORY_PATH,
@@ -44,6 +38,8 @@ class MercurialAdapterTest < ActiveSupport::TestCase
           nil,
           'ISO-8859-1'
         )
+      skip "SCM command is unavailable" unless @adapter.class.client_available
+
       @diff_c_support = true
       @char_1        = 'Ü'
       @tag_char_1    = 'tag-Ü-00'
@@ -279,7 +275,7 @@ class MercurialAdapterTest < ActiveSupport::TestCase
     end
 
     def test_entry
-      entry = @adapter.entry()
+      entry = @adapter.entry
       assert_equal "", entry.path
       assert_equal "dir", entry.kind
       entry = @adapter.entry('')
@@ -353,10 +349,7 @@ class MercurialAdapterTest < ActiveSupport::TestCase
     end
 
     def test_branches
-      branches = []
-      @adapter.branches.each do |b|
-        branches << b
-      end
+      branches = @adapter.branches
       assert_equal 10, branches.length
 
       branch = branches[-10]

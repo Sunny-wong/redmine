@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,19 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class ReportsControllerTest < Redmine::ControllerTest
-  fixtures :projects, :trackers, :issue_statuses, :issues,
-           :enumerations, :users, :issue_categories,
-           :projects_trackers,
-           :roles,
-           :member_roles,
-           :members,
-           :enabled_modules,
-           :versions,
-           :workflows
-
   def test_get_issue_report
     get(
       :issue_report,
@@ -107,6 +97,8 @@ class ReportsControllerTest < Redmine::ControllerTest
     WorkflowTransition.create(:role_id => 1, :tracker_id => 1, :old_status_id => 1, :new_status_id => 4)
     WorkflowTransition.create(:role_id => 1, :tracker_id => 1, :old_status_id => 2, :new_status_id => 5)
     WorkflowTransition.create(:role_id => 1, :tracker_id => 2, :old_status_id => 1, :new_status_id => 6)
+    WorkflowTransition.create(:role_id => 1, :tracker_id => 2, :old_status_id => 3, :new_status_id => 3)
+
     with_settings :display_subprojects_issues => '0' do
       get(:issue_report_details, :params => {:id => 1, :detail => 'tracker'})
     end
@@ -151,7 +143,7 @@ class ReportsControllerTest < Redmine::ControllerTest
         assert_select ':nth-child(9)', :text => '3' # closed
         assert_select ':nth-child(10)', :text => '8' # total
       end
-      assert_select 'table.issue-report td.name', :text => 'Support request', :count => 1
+      assert_select 'table.issue-report-detailed td.name', :text => 'Support request', :count => 1
     end
   end
 
@@ -206,6 +198,17 @@ class ReportsControllerTest < Redmine::ControllerTest
       assert_select ':nth-child(9)', :text => '1' # closed
       assert_select ':nth-child(10)', :text => '3' # total
     end
+    assert_select 'table.list tfoot :nth-child(1)' do
+      assert_select 'td', :text => 'Total'
+      assert_select ':nth-child(2)', :text => '3' # status:1
+      assert_select ':nth-child(3)', :text => '0' # status:2
+      assert_select ':nth-child(4)', :text => '0' # status:3
+      assert_select ':nth-child(5)', :text => '0' # status:4
+      assert_select ':nth-child(6)', :text => '1' # status:5
+      assert_select ':nth-child(8)', :text => '3' # open
+      assert_select ':nth-child(9)', :text => '1' # closed
+      assert_select ':nth-child(10)', :text => '4' # total
+    end
   end
 
   def test_get_issue_report_details_by_assignee_should_show_non_assigned_issue_count
@@ -240,7 +243,7 @@ class ReportsControllerTest < Redmine::ControllerTest
         :detail => 'invalid'
       }
     )
-    assert_response 404
+    assert_response :not_found
   end
 
   def test_issue_report_details_should_csv_export

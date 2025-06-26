@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,22 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class IssueRelationsControllerTest < Redmine::ControllerTest
-  fixtures :projects,
-           :users,
-           :roles,
-           :members,
-           :member_roles,
-           :issues,
-           :issue_statuses,
-           :issue_relations,
-           :enabled_modules,
-           :enumerations,
-           :trackers,
-           :projects_trackers
-
   def setup
     User.current = nil
     @request.session[:user_id] = 3
@@ -71,7 +58,7 @@ class IssueRelationsControllerTest < Redmine::ControllerTest
           }
         }
       )
-      assert_response 404
+      assert_response :not_found
     end
   end
 
@@ -305,7 +292,7 @@ class IssueRelationsControllerTest < Redmine::ControllerTest
   def test_destroy_invalid_relation
     assert_no_difference 'IssueRelation.count' do
       delete(:destroy, :params => {:id => '999'})
-      assert_response 404
+      assert_response :not_found
     end
   end
 
@@ -316,7 +303,7 @@ class IssueRelationsControllerTest < Redmine::ControllerTest
     end
 
     assert_difference 'IssueRelation.count', -1 do
-      delete(:destroy, :params => {:id => '2'}, :xhr => true)
+      delete(:destroy, :params => {:id => '2', :issue_id => '2'}, :xhr => true)
       assert_response :success
       assert_equal 'text/javascript', response.media_type
       assert_include 'relation-2', response.body

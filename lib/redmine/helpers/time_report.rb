@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,7 +28,7 @@ module Redmine
         @criteria = criteria || []
         @criteria = @criteria.select{|criteria| available_criteria.has_key? criteria}
         @criteria.uniq!
-        @criteria = @criteria[0,3]
+        @criteria = @criteria[0, 3]
 
         @columns = (columns && %w(year month week day).include?(columns)) ? columns : 'month'
         @scope = time_entry_scope
@@ -49,7 +49,7 @@ module Redmine
           @scope.includes(:activity).
               reorder(nil).
               group(@criteria.collect{|criteria| @available_criteria[criteria][:sql]} + time_columns).
-              joins(@criteria.collect{|criteria| @available_criteria[criteria][:joins]}.compact).
+              joins(@criteria.filter_map{|criteria| @available_criteria[criteria][:joins]}).
               sum(:hours).each do |hash, hours|
             h = {'hours' => hours}
             (@criteria + time_columns).each_with_index do |name, i|
@@ -77,7 +77,7 @@ module Redmine
           max = @hours.pluck('spent_on').max
           @to = max ? max.to_date : User.current.today
 
-          @total_hours = @hours.inject(0) {|s,k| s = s + k['hours'].to_f}
+          @total_hours = @hours.inject(0) {|s, k| s = s + k['hours'].to_f}
 
           @periods = []
           # Date#at_beginning_of_ not supported in Rails 1.2.x

@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -28,9 +28,11 @@ class ApplicationController < ActionController::Base
   include Redmine::Hook::Helper
   include RoutesHelper
   include AvatarsHelper
+  include IconsHelper
 
   helper :routes
   helper :avatars
+  helper :icons
 
   class_attribute :accept_api_auth_actions
   class_attribute :accept_atom_auth_actions
@@ -129,6 +131,14 @@ class ApplicationController < ActionController::Base
       if (key = api_key_from_request)
         # Use API key
         user = User.find_by_api_key(key)
+      elsif access_token = Doorkeeper.authenticate(request)
+        # Oauth
+        if access_token.accessible?
+          user = User.active.find_by_id(access_token.resource_owner_id)
+          user.oauth_scope = access_token.scopes.all.map(&:to_sym)
+        else
+          doorkeeper_render_error
+        end
       elsif /\ABasic /i.match?(request.authorization.to_s)
         # HTTP Basic, either username/password or API key/random
         authenticate_with_http_basic do |username, password|
@@ -251,7 +261,7 @@ class ApplicationController < ActionController::Base
     end
     if lang.nil? && !Setting.force_default_language_for_anonymous? && request.env['HTTP_ACCEPT_LANGUAGE']
       accept_lang = parse_qvalues(request.env['HTTP_ACCEPT_LANGUAGE']).first
-      if !accept_lang.blank?
+      if accept_lang.present?
         accept_lang = accept_lang.downcase
         lang = find_language(accept_lang) || find_language(accept_lang.split('-').first)
       end
@@ -261,7 +271,7 @@ class ApplicationController < ActionController::Base
   end
 
   def require_login
-    if !User.current.logged?
+    unless User.current.logged?
       # Extract only the basic url parameters on non-GET requests
       if request.get?
         url = request.original_url
@@ -297,7 +307,7 @@ class ApplicationController < ActionController::Base
   def require_admin
     return unless require_login
 
-    if !User.current.admin?
+    unless User.current.admin?
       render_403
       return false
     end
@@ -354,9 +364,12 @@ class ApplicationController < ActionController::Base
   # and authorize the user for the requested action
   def find_optional_project
     if params[:project_id].present?
-      find_project(params[:project_id])
+      @project = Project.find(params[:project_id])
     end
     authorize_global
+  rescue ActiveRecord::RecordNotFound
+    User.current.logged? ? render_404 : require_login
+    false
   end
 
   # Finds and sets @project based on @object.project
@@ -405,7 +418,7 @@ class ApplicationController < ActionController::Base
     raise ActiveRecord::RecordNotFound if @issues.empty?
     raise Unauthorized unless @issues.all?(&:visible?)
 
-    @projects = @issues.collect(&:project).compact.uniq
+    @projects = @issues.filter_map(&:project).uniq
     @project = @projects.first if @projects.size == 1
   rescue ActiveRecord::RecordNotFound
     render_404
@@ -472,25 +485,22 @@ class ApplicationController < ActionController::Base
     url = params[:back_url]
     if url.nil? && referer = request.env['HTTP_REFERER']
       url = CGI.unescape(referer.to_s)
-      # URLs that contains the utf8=[checkmark] parameter added by Rails are
-      # parsed as invalid by URI.parse so the redirect to the back URL would
-      # not be accepted (ApplicationController#validate_back_url would return
-      # false)
-      url.gsub!(/(\?|&)utf8=\u2713&?/, '\1')
     end
     url
   end
   helper_method :back_url
 
-  def redirect_back_or_default(default, options={})
+  def redirect_back_or_default(default, options = {})
+    referer = options.delete(:referer)
+
     if back_url = validate_back_url(params[:back_url].to_s)
       redirect_to(back_url)
       return
-    elsif options[:referer]
+    elsif referer
       redirect_to_referer_or default
       return
     end
-    redirect_to default
+    redirect_to default, options
     false
   end
 
@@ -504,25 +514,22 @@ class ApplicationController < ActionController::Base
     end
 
     begin
-      uri = URI.parse(back_url)
-    rescue URI::InvalidURIError
+      uri = Addressable::URI.parse(back_url)
+      [:scheme, :host, :port].each do |component|
+        if uri.send(component).present? && uri.send(component) != request.send(component)
+          return false
+        end
+      end
+      # Remove unnecessary components to convert the URL into a relative URL
+      uri.omit!(:scheme, :authority)
+    rescue Addressable::URI::InvalidURIError
       return false
     end
-
-    [:scheme, :host, :port].each do |component|
-      if uri.send(component).present? && uri.send(component) != request.send(component)
-        return false
-      end
-
-      uri.send(:"#{component}=", nil)
-    end
-    # Always ignore basic user:password in the URL
-    uri.userinfo = nil
 
     path = uri.to_s
     # Ensure that the remaining URL starts with a slash, followed by a
     # non-slash character or the end
-    if !%r{\A/([^/]|\z)}.match?(path)
+    unless %r{\A/([^/]|\z)}.match?(path)
       return false
     end
 
@@ -552,7 +559,7 @@ class ApplicationController < ActionController::Base
     else
       if args.any?
         redirect_to *args
-      elsif block_given?
+      elsif block
         yield
       else
         raise "#redirect_to_referer_or takes arguments or a block"
@@ -632,19 +639,8 @@ class ApplicationController < ActionController::Base
     end
   end
 
-  def self.accept_rss_auth(*actions)
-    ActiveSupport::Deprecation.warn "Application#self.accept_rss_auth is deprecated and will be removed in Redmine 6.0. Please use #self.accept_atom_auth instead."
-    self.class.accept_atom_auth(*actions)
-  end
-
   def accept_atom_auth?(action=action_name)
     self.class.accept_atom_auth.include?(action.to_sym)
-  end
-
-  # TODO: remove in Redmine 6.0
-  def accept_rss_auth?(action=action_name)
-    ActiveSupport::Deprecation.warn "Application#accept_rss_auth? is deprecated and will be removed in Redmine 6.0. Please use #accept_atom_auth? instead."
-    accept_atom_auth?(action)
   end
 
   def self.accept_api_auth(*actions)
@@ -780,7 +776,7 @@ class ApplicationController < ActionController::Base
 
   def render_api_errors(*messages)
     @error_messages = messages.flatten
-    render :template => 'common/error_messages', :format => [:api], :status => :unprocessable_entity, :layout => nil
+    render :template => 'common/error_messages', :format => [:api], :status => :unprocessable_content, :layout => nil
   end
 
   # Overrides #_include_layout? so that #render with no arguments

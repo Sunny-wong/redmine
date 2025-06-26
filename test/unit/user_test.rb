@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,21 +17,9 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../test_helper', __FILE__)
+require_relative '../test_helper'
 
 class UserTest < ActiveSupport::TestCase
-  fixtures :users, :email_addresses, :members, :projects, :roles, :member_roles, :auth_sources,
-           :trackers, :issue_statuses,
-           :projects_trackers,
-           :watchers,
-           :issue_categories, :enumerations, :issues,
-           :journals, :journal_details,
-           :groups_users,
-           :enabled_modules,
-           :tokens,
-           :user_preferences,
-           :custom_fields, :custom_fields_projects, :custom_fields_trackers, :custom_values
-
   include Redmine::I18n
 
   def setup
@@ -61,8 +49,8 @@ class UserTest < ActiveSupport::TestCase
 
   def test_sorted_scope_should_sort_user_by_display_name
     # Use .active to ignore anonymous with localized display name
-    assert_equal User.active.map(&:name).map(&:downcase).sort,
-                 User.active.sorted.map(&:name).map(&:downcase)
+    assert_equal User.active.map {|u| u.name.downcase}.sort,
+                 User.active.sorted.map {|u| u.name.downcase}
   end
 
   def test_generate
@@ -129,7 +117,7 @@ class UserTest < ActiveSupport::TestCase
   def test_login_length_validation
     user = User.new(:firstname => "new", :lastname => "user", :mail => "newuser@somenet.foo")
     user.login = "x" * (User::LOGIN_LENGTH_LIMIT+1)
-    assert !user.valid?
+    assert user.invalid?
 
     user.login = "x" * (User::LOGIN_LENGTH_LIMIT)
     assert user.valid?
@@ -191,11 +179,11 @@ class UserTest < ActiveSupport::TestCase
   end
 
   def test_user_before_create_should_set_the_mail_notification_to_the_default_setting
-    @user1 = User.generate!
-    assert_equal 'only_my_events', @user1.mail_notification
+    user1 = User.generate!
+    assert_equal 'only_assigned', user1.mail_notification
     with_settings :default_notification_option => 'all' do
-      @user2 = User.generate!
-      assert_equal 'all', @user2.mail_notification
+      user2 = User.generate!
+      assert_equal 'all', user2.mail_notification
     end
   end
 
@@ -308,12 +296,17 @@ class UserTest < ActiveSupport::TestCase
   def test_destroy_should_update_journals
     issue = Issue.generate!(:project_id => 1, :author_id => 2,
                           :tracker_id => 1, :subject => 'foo')
+    # Prepare a journal with both user_id and updated_by_id set to 2
     issue.init_journal(User.find(2), "update")
     issue.save!
+    journal = issue.journals.first
+    journal.update_columns(updated_by_id: 2)
 
     User.find(2).destroy
     assert_nil User.find_by_id(2)
-    assert_equal User.anonymous, issue.journals.first.reload.user
+    journal.reload
+    assert_equal User.anonymous, journal.user
+    assert_equal User.anonymous, journal.updated_by
   end
 
   def test_destroy_should_update_journal_details_old_value
@@ -558,6 +551,25 @@ class UserTest < ActiveSupport::TestCase
     end
   end
 
+  def test_validate_password_complexity
+    set_language_if_valid 'en'
+    user = users(:users_002)
+    bad_passwords = [
+      user.login,
+      user.lastname,
+      user.firstname,
+      user.mail,
+      user.login.upcase
+    ]
+
+    bad_passwords.each do |p|
+      user.password = p
+      user.password_confirmation = p
+      assert_not user.save
+      assert_includes user.errors.full_messages, 'Password is too simple'
+    end
+  end
+
   def test_name_format
     assert_equal 'John S.', @jsmith.name(:firstname_lastinitial)
     assert_equal 'Smith, John', @jsmith.name(:lastname_comma_firstname)
@@ -575,6 +587,33 @@ class UserTest < ActiveSupport::TestCase
     with_settings :user_format => :lastname do
       assert_equal 'Smith', @jsmith.reload.name
     end
+  end
+
+  def test_initials_format
+    assert_equal 'JS', @jsmith.initials(:firstname_lastinitial)
+    assert_equal 'SJ', @jsmith.initials(:lastname_comma_firstname)
+    assert_equal 'SJ', @jsmith.initials(:lastname_firstname)
+    assert_equal 'JS', @jsmith.initials(:firstinitial_lastname)
+    assert_equal 'JL', User.new(:firstname => 'Jean-Philippe', :lastname => 'Lang').initials(:firstinitial_lastname)
+    assert_equal 'JS', @jsmith.initials(:undefined_format)
+  end
+
+  def test_initials_should_use_setting_as_default_format
+    with_settings :user_format => :firstname_lastname do
+      assert_equal 'JS', @jsmith.reload.initials
+    end
+    with_settings :user_format => :username do
+      assert_equal 'JS', @jsmith.reload.initials
+    end
+    with_settings :user_format => :lastname do
+      assert_equal 'SM', @jsmith.reload.initials
+    end
+  end
+
+  def test_lastname_should_accept_255_characters
+    u = User.first
+    u.lastname = 'a' * 255
+    assert u.save
   end
 
   def test_today_should_return_the_day_according_to_user_time_zone
@@ -1094,8 +1133,8 @@ class UserTest < ActiveSupport::TestCase
   def test_random_password
     u = User.new
     u.random_password
-    assert !u.password.blank?
-    assert !u.password_confirmation.blank?
+    assert u.password.present?
+    assert u.password_confirmation.present?
   end
 
   def test_random_password_include_required_characters
@@ -1301,7 +1340,7 @@ class UserTest < ActiveSupport::TestCase
 
     user.reload
     # Salt added
-    assert !user.salt.blank?
+    assert user.salt.present?
     # Password still valid
     assert user.check_password?("unsalted")
     assert_equal user, User.try_to_login(user.login, "unsalted")
@@ -1356,6 +1395,79 @@ class UserTest < ActiveSupport::TestCase
 
     assert_difference 'User.count', -2 do
       User.prune(7)
+    end
+  end
+
+  def test_should_recognize_authorized_by_oauth
+    u = User.find 2
+    assert_not u.authorized_by_oauth?
+    u.oauth_scope = [:add_issues, :view_issues]
+    assert u.authorized_by_oauth?
+  end
+
+  def test_admin_should_be_limited_by_oauth_scope
+    u = User.find_by_admin(true)
+    assert u.admin?
+
+    u.oauth_scope = [:add_issues, :view_issues]
+    assert_not u.admin?
+
+    u.oauth_scope = [:add_issues, :view_issues, :admin]
+    assert u.admin?
+
+    u = User.find_by_admin(false)
+    assert_not u.admin?
+    u.oauth_scope = [:add_issues, :view_issues, :admin]
+    assert_not u.admin?
+  end
+
+  def test_oauth_scope_should_limit_global_user_permissions
+    admin = User.find 1
+    user = User.find 2
+    [admin, user].each do |u|
+      assert u.allowed_to?(:add_issues, nil, global: true)
+      assert u.allowed_to?(:view_issues, nil, global: true)
+      u.oauth_scope = [:view_issues]
+      assert_not u.allowed_to?(:add_issues, nil, global: true)
+      assert u.allowed_to?(:view_issues, nil, global: true)
+    end
+  end
+
+  def test_oauth_scope_should_limit_project_user_permissions
+    admin = User.find 1
+    project = Project.find 5
+    assert admin.allowed_to?(:add_issues, project)
+    assert admin.allowed_to?(:view_issues, project)
+    admin.oauth_scope = [:view_issues]
+    assert_not admin.allowed_to?(:add_issues, project)
+    assert admin.allowed_to?(:view_issues, project)
+
+    admin.oauth_scope = [:view_issues, :admin]
+    assert admin.allowed_to?(:add_issues, project)
+    assert admin.allowed_to?(:view_issues, project)
+
+    user = User.find 2
+    project = Project.find 1
+    assert user.allowed_to?(:add_issues, project)
+    assert user.allowed_to?(:view_issues, project)
+    user.oauth_scope = [:view_issues]
+    assert_not user.allowed_to?(:add_issues, project)
+    assert user.allowed_to?(:view_issues, project)
+
+    user.oauth_scope = [:view_issues, :admin]
+    assert_not user.allowed_to?(:add_issues, project)
+    assert user.allowed_to?(:view_issues, project)
+  end
+
+  def test_destroy_should_delete_associated_reactions
+    users(:users_004).reactions.create!(
+      [
+        {reactable: issues(:issues_001)},
+        {reactable: issues(:issues_002)}
+      ]
+    )
+    assert_difference 'Reaction.count', -2 do
+      users(:users_004).destroy
     end
   end
 end

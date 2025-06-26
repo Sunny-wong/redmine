@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,13 +17,11 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-require File.expand_path('../../../test_helper', __FILE__)
+require_relative '../../test_helper'
 
 class DestroyProjectsJobTest < ActiveJob::TestCase
-  fixtures :users, :projects, :email_addresses
-
   setup do
-    @projects = Project.where(id: [1, 2]).to_a
+    @projects = Project.where(id: [1, 2]).order(:id).to_a
     @user = User.find_by_admin true
     ActionMailer::Base.deliveries.clear
   end
@@ -58,12 +56,16 @@ class DestroyProjectsJobTest < ActiveJob::TestCase
       assert_match /deleted successfully/, m.text_part.to_s
     else
       assert_enqueued_with(
-        job: ActionMailer::MailDeliveryJob,
+        job: Mailer::DeliveryJob,
         args: ->(job_args){
           job_args[1] == 'security_notification' &&
           job_args[3].to_s.include?("mail_destroy_project_with_subprojects_successful")
         }
       )
     end
+  end
+
+  def queue_adapter_for_test
+    ActiveJob::QueueAdapters::TestAdapter.new
   end
 end

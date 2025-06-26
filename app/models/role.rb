@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 # Redmine - project management software
-# Copyright (C) 2006-2022  Jean-Philippe Lang
+# Copyright (C) 2006-  Jean-Philippe Lang
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,7 +17,7 @@
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 
-class Role < ActiveRecord::Base
+class Role < ApplicationRecord
   include Redmine::SafeAttributes
 
   # Custom coder for the permissions attribute that should be an
@@ -76,7 +76,7 @@ class Role < ActiveRecord::Base
   has_many :members, :through => :member_roles
   acts_as_positioned :scope => :builtin
 
-  serialize :permissions, ::Role::PermissionsAttributeCoder
+  serialize :permissions, coder: ::Role::PermissionsAttributeCoder
   store :settings, :accessors => [:permissions_all_trackers, :permissions_tracker_ids]
 
   validates_presence_of :name
@@ -122,7 +122,7 @@ class Role < ActiveRecord::Base
   end
 
   def permissions=(perms)
-    perms = perms.collect {|p| p.to_sym unless p.blank?}.compact.uniq if perms
+    perms = perms.filter_map {|p| p.to_sym unless p.blank?}.uniq if perms
     write_attribute(:permissions, perms)
   end
 
@@ -155,14 +155,14 @@ class Role < ActiveRecord::Base
   end
 
   def <=>(role)
-    if role
-      if builtin == role.builtin
-        position <=> role.position
-      else
-        builtin <=> role.builtin
-      end
+    # returns -1 for nil since r2726
+    return -1 if role.nil?
+    return nil unless role.is_a?(Role)
+
+    if builtin == role.builtin
+      position <=> role.position
     else
-      -1
+      builtin <=> role.builtin
     end
   end
 
@@ -198,11 +198,14 @@ class Role < ActiveRecord::Base
   # action can be:
   # * a parameter-like Hash (eg. :controller => 'projects', :action => 'edit')
   # * a permission Symbol (eg. :edit_project)
-  def allowed_to?(action)
+  # scope can be:
+  # * an array of permissions which will be used as filter (logical AND)
+
+  def allowed_to?(action, scope=nil)
     if action.is_a? Hash
-      allowed_actions.include? "#{action[:controller]}/#{action[:action]}"
+      allowed_actions(scope).include? "#{action[:controller]}/#{action[:action]}"
     else
-      allowed_permissions.include? action
+      allowed_permissions(scope).include? action
     end
   end
 
@@ -224,13 +227,15 @@ class Role < ActiveRecord::Base
 
   def permissions_tracker_ids=(arg)
     h = arg.to_hash
-    h.values.each {|v| v.reject!(&:blank?)}
+    h.each_value {|v| v.reject!(&:blank?)}
     super(h)
   end
 
   # Returns true if tracker_id belongs to the list of
   # trackers for which permission is given
   def permissions_tracker_ids?(permission, tracker_id)
+    return false unless has_permission?(permission)
+
     permissions_tracker_ids(permission).include?(tracker_id)
   end
 
@@ -244,6 +249,8 @@ class Role < ActiveRecord::Base
 
   # Returns true if permission is given for all trackers
   def permissions_all_trackers?(permission)
+    return false unless has_permission?(permission)
+
     permissions_all_trackers[permission.to_s].to_s != '0'
   end
 
@@ -294,13 +301,20 @@ class Role < ActiveRecord::Base
 
   private
 
-  def allowed_permissions
-    @allowed_permissions ||= permissions + Redmine::AccessControl.public_permissions.collect {|p| p.name}
+  def allowed_permissions(scope = nil)
+    scope = scope.sort if scope.present? # to maintain stable cache keys
+    @allowed_permissions ||= {}
+    @allowed_permissions[scope] ||= begin
+      unscoped = permissions + Redmine::AccessControl.public_permissions.collect {|p| p.name}
+      scope.present? ? unscoped & scope : unscoped
+    end
   end
 
-  def allowed_actions
-    @actions_allowed ||=
-      allowed_permissions.inject([]) do |actions, permission|
+  def allowed_actions(scope = nil)
+    scope = scope.sort if scope.present? # to maintain stable cache keys
+    @actions_allowed ||= {}
+    @actions_allowed[scope] ||=
+      allowed_permissions(scope).inject([]) do |actions, permission|
         actions += Redmine::AccessControl.allowed_actions(permission)
       end.flatten
   end
